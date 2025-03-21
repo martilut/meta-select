@@ -70,15 +70,7 @@ class TabzillaFormatter(MetadataFormatter):
         )
         self.agg_func_features = agg_func_features
         self.agg_func_metrics = agg_func_metrics
-        self.round_attrs = round_attrs if round_attrs is not None else \
-            [
-                "f__pymfe.general.nr_inst",
-                "f__pymfe.general.nr_attr",
-                "f__pymfe.general.nr_bin",
-                "f__pymfe.general.nr_cat",
-                "f__pymfe.general.nr_num",
-                "f__pymfe.general.nr_class",
-            ]
+        self.round_attrs = round_attrs
         self.filter_families = filter_families
 
     def __handle_features__(self, features_dataset: pd.DataFrame) -> tuple[pd.DataFrame, HandlerInfo]:

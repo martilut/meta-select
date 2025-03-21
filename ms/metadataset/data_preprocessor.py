@@ -128,7 +128,6 @@ class ScalePreprocessor(MetadataPreprocessor):
             features_folder: str = "filtered",
             metrics_folder: str | None = "target",
             to_scale: list[str] | None = None,
-            perf_type: str = "abs",  # or "rel"
             remove_outliers: bool = False,
             outlier_modifier: float = 1.0,
             test_mode: bool = False,
@@ -141,7 +140,6 @@ class ScalePreprocessor(MetadataPreprocessor):
         )
         self.to_scale = to_scale
         self.parameters = {}
-        self.perf_type = perf_type
         self.remove_outliers = remove_outliers
         self.outlier_modifier = outlier_modifier
 

@@ -7,6 +7,7 @@ from sklearn.preprocessing import KBinsDiscretizer
 from ms.handler.handler_info import HandlerInfo
 from ms.handler.data_handler import MetricsHandler
 from ms.handler.data_source import DataSource
+from ms.metaresearch.model_type import ModelType
 from ms.utils.typing import NDArrayFloatT
 
 
@@ -197,7 +198,7 @@ class TargetDiffBuilder(TargetBuilder):
             self,
             md_source: DataSource,
             classes: list[str],
-            model_classes: dict[str, str],
+            model_classes: dict[str, ModelType],
             features_folder: str = "filtered",
             metrics_folder: str | None = "filtered",
             test_mode: bool = False,
@@ -222,8 +223,8 @@ class TargetDiffBuilder(TargetBuilder):
         mean_vals = metrics_dataset.mean()
         max_res = {c : ("", 0.) for c in self.classes}
         for i in mean_vals.index:
-            if mean_vals[i] > max_res[self.model_classes[i]][1]:
-                max_res[self.model_classes[i]] = (i, mean_vals[i])
+            if mean_vals[i] > max_res[self.model_classes[i].value][1]:
+                max_res[self.model_classes[i].value] = (i, mean_vals[i])
         models = [max_res[key][0] for key in max_res]
 
         diff_df = pd.DataFrame(index=metrics_dataset.index)

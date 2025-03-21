@@ -9,7 +9,7 @@ from ms.handler.data_source import TabzillaSource
 from ms.metaresearch.meta_learner import MetaLearner
 from ms.metaresearch.meta_model import MetaModel
 from ms.metaresearch.selectors.base import BaseSelector
-from ms.metaresearch.selectors.causal import TESelector, CFSelector
+from ms.metaresearch.selectors.causal import TESelector
 from ms.metaresearch.selectors.model_based import XGBSelector, LassoSelector
 from ms.metaresearch.selectors.model_free import CorrelationSelector, FValueSelector, MutualInfoSelector
 from ms.metaresearch.selectors.model_wrapper import RFESelector
@@ -18,7 +18,7 @@ seed = 42
 
 md_source = TabzillaSource()
 
-data_transform = "power"
+data_transform = "quantile"
 
 k_fold_splitter = KFold(n_splits=3, shuffle=True, random_state=seed)
 train_test_slitter = ShuffleSplit(n_splits=1, test_size=0.3, random_state=seed)
@@ -30,7 +30,6 @@ xgb = XGBSelector(md_source=md_source)
 lasso = LassoSelector(md_source=md_source)
 te = TESelector(md_source=md_source)
 base = BaseSelector(md_source=md_source)
-cf = CFSelector(md_source=md_source)
 
 mean_cols = ["test_b_acc_mean", "test_f1_mean", "test_roc_mean"]
 std_cols = ["test_b_acc_std", "test_f1_std", "test_roc_std"]
@@ -44,7 +43,6 @@ all_handlers = {
         "lasso": (LassoSelector, lasso),
         "te": (TESelector, te),
         "base": (BaseSelector, base),
-        "cf": (CFSelector, cf),
 }
 
 # selectors_to_use = ["base", "corr", "f_val", "mi", "xgb", "lasso", "te"]
