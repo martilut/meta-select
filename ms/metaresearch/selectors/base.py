@@ -1,40 +1,23 @@
-import numpy as np
 import pandas as pd
 
-from ms.handler.data_source import DataSource
-from ms.handler.selector_handler import SelectorHandler
-from ms.utils.typing import NDArrayFloatT
+from ms.metaresearch.selector import Selector
 
 
-class BaseSelector(SelectorHandler):
+class BaseSelector(Selector):
     @property
-    def class_folder(self) -> str:
+    def name(self) -> str:
         return "base"
 
-    @property
-    def class_name(self) -> str:
-        return "base"
-
-    def __init__(
+    def compute_generic(
             self,
-            md_source: DataSource,
-            features_folder: str = "preprocessed",
-            metrics_folder: str | None = "preprocessed",
-            test_mode: bool = False,
-    ) -> None:
-        super().__init__(
-            md_source=md_source,
-            features_folder=features_folder,
-            metrics_folder=metrics_folder,
-            test_mode=test_mode,
-        )
-
-    def handle_data(
-            self,
-            x: NDArrayFloatT,
-            y: NDArrayFloatT,
-            features_names: list[str],
+            x_train: pd.DataFrame,
+            y_train: pd.DataFrame,
+            x_test: pd.DataFrame | None = None,
+            y_test: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        res = pd.DataFrame(index=features_names)
-        res["no_selection"] = np.zeros(shape=(len(features_names),))
+        res = pd.DataFrame(index=x_train.columns)
+        res["value"] = [1.0] * len(x_train.columns)
+        return res
+
+    def __select__(self, res: pd.DataFrame) -> pd.DataFrame:
         return res
