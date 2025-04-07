@@ -84,7 +84,6 @@ class TabzillaFilter(MetadataFilter):
         self.__remove_features_by_key__(features_dataset=filtered_features)
         self.__remove_unsuitable_features__(features_dataset=filtered_features)
         self.__filter_outliers__(features_dataset=filtered_features)
-        self.__fill_undefined_values__(features_dataset=filtered_features)
         remove_constant_features(features_dataset=filtered_features)
         filtered_features = self.__remove_duplicates__(features_dataset=filtered_features)
 
