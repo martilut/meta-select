@@ -1,6 +1,8 @@
 from abc import ABC
 
+import numpy as np
 import pandas as pd
+from sklearn.ensemble import RandomForestRegressor
 from sklearn.feature_selection import RFE
 
 from ms.metaresearch.meta_model import MetaModel
@@ -19,8 +21,10 @@ class RFESelector(Selector, ModelWrapper):
             self,
             model: MetaModel,
             rank_threshold: float = 1.0,
+            cv: bool = False,
     ) -> None:
         super().__init__(model=model)
+        super().__init__(cv=cv)
         self.rank_threshold = rank_threshold
 
     @property
@@ -33,6 +37,7 @@ class RFESelector(Selector, ModelWrapper):
             y_train: pd.DataFrame,
             x_test: pd.DataFrame | None = None,
             y_test: pd.DataFrame | None = None,
+            task: str = "class",
     ) -> pd.DataFrame:
         rfe = RFE(estimator=self.model)
         rfe.fit(X=x_train, y=y_train)

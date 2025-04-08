@@ -1,6 +1,6 @@
 import pandas as pd
 from scipy.stats import pearsonr, spearmanr
-from sklearn.feature_selection import f_classif, mutual_info_classif, chi2
+from sklearn.feature_selection import f_classif, mutual_info_classif, chi2, mutual_info_regression
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 from ms.metaresearch.selector import Selector
@@ -12,8 +12,8 @@ class CorrelationSelector(Selector):
             corr_type: str = "spearman",
             p_threshold: float = 0.05,
             corr_threshold: float = 0.3,
-
     ) -> None:
+        super().__init__()
         self.corr_type = corr_type
         self.p_threshold = p_threshold
         self.corr_threshold = corr_threshold
@@ -28,6 +28,7 @@ class CorrelationSelector(Selector):
             y_train: pd.DataFrame,
             x_test: pd.DataFrame | None = None,
             y_test: pd.DataFrame | None = None,
+            task: str = "class",
     ) -> pd.DataFrame:
         x = x_train.to_numpy()
         y = y_train.to_numpy()
@@ -63,6 +64,7 @@ class CorrelationInnerSelector(Selector):
             vif_count_threshold: int | None = None,
             vif_value_threshold: float | None = None,
     ):
+        super().__init__()
         self.corr_type = corr_type
         self.corr_threshold = corr_threshold
         self.vif_count_threshold = vif_count_threshold
@@ -74,6 +76,7 @@ class CorrelationInnerSelector(Selector):
             y_train: pd.DataFrame,
             x_test: pd.DataFrame | None = None,
             y_test: pd.DataFrame | None = None,
+            task: str = "class",
     ) -> pd.DataFrame:
         corr = x_train.corr(method=self.corr_type)
         collinear_pairs = set()
@@ -124,6 +127,7 @@ class Chi2Selector(Selector):
             self,
             p_threshold: float = 0.05
     ) -> None:
+        super().__init__()
         self.p_threshold = p_threshold
 
     @property
@@ -136,6 +140,7 @@ class Chi2Selector(Selector):
             y_train: pd.DataFrame,
             x_test: pd.DataFrame | None = None,
             y_test: pd.DataFrame | None = None,
+            task: str = "class",
     ) -> pd.DataFrame:
         chi2_stats, p_values = chi2(X=x_train, y=y_train)
         res = pd.DataFrame(index=x_train.columns)
@@ -153,6 +158,7 @@ class MutualInfoSelector(Selector):
             self,
             quantile_value: float = 0.5
     ) -> None:
+        super().__init__()
         self.quantile_value = quantile_value
 
     @property
@@ -165,8 +171,11 @@ class MutualInfoSelector(Selector):
             y_train: pd.DataFrame,
             x_test: pd.DataFrame | None = None,
             y_test: pd.DataFrame | None = None,
+            task: str = "class",
     ) -> pd.DataFrame:
-        mi = mutual_info_classif(X=x_train, y=y_train)
+        mi = mutual_info_classif(X=x_train, y=y_train) \
+            if task == "class" \
+            else mutual_info_regression(X=x_train, y=y_train)
         res = pd.DataFrame(index=x_train.columns)
         res["value"] = mi
         return res
@@ -183,6 +192,7 @@ class FValueSelector(Selector):
             p_threshold: float = 0.05,
             quantile_value: float = 0.5
     ) -> None:
+        super().__init__()
         self.p_threshold = p_threshold
         self.quantile_value = quantile_value
 
@@ -196,6 +206,7 @@ class FValueSelector(Selector):
             y_train: pd.DataFrame,
             x_test: pd.DataFrame | None = None,
             y_test: pd.DataFrame | None = None,
+            task: str = "class",
     ) -> pd.DataFrame:
         f_statistic, p_values = f_classif(X=x_train, y=y_train)
         res = pd.DataFrame(index=x_train.columns)

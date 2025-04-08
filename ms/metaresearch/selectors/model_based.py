@@ -8,9 +8,20 @@ from ms.metaresearch.selector import Selector
 class XGBSelector(Selector):
     def __init__(
             self,
-            importance_threshold: float = 0.0
+            importance_threshold: float = 0.0,
+            reg_params: dict | None = None,
+            class_params: dict | None = None,
+            random_state: int | None = None,
+            cv: bool = False,
     ) -> None:
+        super().__init__(cv=cv)
         self.importance_threshold = importance_threshold
+        self.reg_params = reg_params if reg_params is not None else {
+            "random_state": random_state
+        }
+        self.class_params = class_params if class_params is not None else {
+            "random_state": random_state
+        }
 
     @property
     def name(self) -> str:
@@ -19,25 +30,14 @@ class XGBSelector(Selector):
     def compute_generic(
             self,
             x_train: pd.DataFrame,
-            y_train: pd.Series,
+            y_train: pd.DataFrame,
             x_test: pd.DataFrame | None = None,
-            y_test: pd.Series | None = None,
+            y_test: pd.DataFrame | None = None,
+            task: str = "class",
     ) -> pd.DataFrame:
-        xgb = XGBClassifier()
-        xgb.fit(X=x_train, y=y_train)
-
-        res = pd.DataFrame(index=x_train.columns)
-        res["value"] = xgb.feature_importances_
-        return res
-
-    def compute_regression(
-            self,
-            x_train: pd.DataFrame,
-            y_train: pd.Series,
-            x_test: pd.DataFrame | None = None,
-            y_test: pd.Series | None = None,
-    ) -> pd.DataFrame:
-        xgb = XGBRegressor()
+        xgb = XGBClassifier(**self.class_params) \
+            if task == "class" \
+            else XGBRegressor(**self.reg_params)
         xgb.fit(X=x_train, y=y_train)
 
         res = pd.DataFrame(index=x_train.columns)
@@ -52,9 +52,27 @@ class XGBSelector(Selector):
 class LassoSelector(Selector):
     def __init__(
             self,
-            coef_threshold: float = 0.0
+            coef_threshold: float = 0.0,
+            reg_params: dict | None = None,
+            class_params: dict | None = None,
+            random_state: int | None = None,
+            cv: bool = False,
     ) -> None:
+        super().__init__(cv=cv)
         self.coef_threshold = coef_threshold
+        self.reg_params = reg_params if reg_params is not None else {
+            "alpha": 0.15,
+            "random_state": random_state,
+            "fit_intercept": True,
+
+        }
+        self.class_params = class_params if class_params is not None else {
+            "penalty": "l1",
+            "solver": "liblinear",
+            "C": 0.15,
+            "random_state": random_state,
+            "fit_intercept": True
+        }
 
     @property
     def name(self) -> str:
@@ -63,38 +81,19 @@ class LassoSelector(Selector):
     def compute_generic(
             self,
             x_train: pd.DataFrame,
-            y_train: pd.Series,
+            y_train: pd.DataFrame,
             x_test: pd.DataFrame | None = None,
-            y_test: pd.Series | None = None,
+            y_test: pd.DataFrame | None = None,
+            task: str = "class",
     ) -> pd.DataFrame:
-        model = LogisticRegression(
-            penalty='l1',
-            solver='liblinear',
-            C=0.15,
-            random_state=42,
-            fit_intercept=True,
-        )
+        model = LogisticRegression(**self.class_params) \
+            if task == "class" \
+            else Lasso(**self.reg_params)
+
         model.fit(X=x_train, y=y_train)
 
         res = pd.DataFrame(index=x_train.columns)
         res["value"] = model.coef_.flatten()
-        return res
-
-    def compute_regression(
-            self,
-            x_train: pd.DataFrame,
-            y_train: pd.Series,
-            x_test: pd.DataFrame | None = None,
-            y_test: pd.Series | None = None,
-    ) -> pd.DataFrame:
-        model = Lasso(
-            alpha=0.15,
-            random_state=42
-        )
-        model.fit(X=x_train, y=y_train)
-
-        res = pd.DataFrame(index=x_train.columns)
-        res["value"] = model.coef_
         return res
 
     def __select__(self, res: pd.DataFrame) -> pd.DataFrame:
