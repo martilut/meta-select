@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import KBinsDiscretizer
 
-from ms.handler.handler_info import HandlerInfo
-from ms.handler.data_handler import MetricsHandler
-from ms.handler.data_source import DataSource
+from ms.metadataset.handler_info import HandlerInfo
+from ms.metadataset.data_handler import MetricsHandler
+from ms.metadataset.data_source import DataSource
 from ms.metaresearch.model_type import ModelType
 from ms.utils.typing import NDArrayFloatT
 

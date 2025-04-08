@@ -2,8 +2,8 @@ from random import sample
 
 import numpy as np
 
-from ms.handler.data_handler import DataHandler
-from ms.handler.data_source import DataSource
+from ms.metadataset.data_handler import DataHandler
+from ms.metadataset.data_source import DataSource
 from ms.utils.typing import NDArrayFloatT
 
 

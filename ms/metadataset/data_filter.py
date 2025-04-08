@@ -4,9 +4,9 @@ from statistics import median
 import numpy as np
 import pandas as pd
 
-from ms.handler.handler_info import HandlerInfo
-from ms.handler.data_handler import FeaturesHandler, MetricsHandler
-from ms.handler.data_source import TabzillaSource
+from ms.metadataset.handler_info import HandlerInfo
+from ms.metadataset.data_handler import FeaturesHandler, MetricsHandler
+from ms.metadataset.data_source import TabzillaSource
 from ms.utils.metadata import remove_constant_features
 
 

@@ -3,9 +3,9 @@ from pathlib import Path
 
 import pandas as pd
 
-from ms.config.navigation_config import NavigationConfig
-from ms.handler.data_source import SourceBased
-from ms.handler.handler_info import HandlerInfo
+from ms.metadataset.navigation_config import NavigationConfig
+from ms.metadataset.data_source import SourceBased
+from ms.metadataset.handler_info import HandlerInfo
 from ms.utils.debug import Debuggable
 from ms.utils.navigation import load, save, get_path, rewrite_decorator
 
