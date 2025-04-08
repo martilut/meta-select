@@ -12,9 +12,9 @@ def split(
 ) -> dict[int, dict[str, list[int]]]:
     splits_dict = {}
 
-    outer_split = outer_split.split(x_df, y_df)
+    outer_splits = outer_split.split(x_df, y_df)
 
-    for i, (outer_train, outer_test) in enumerate(outer_split):
+    for i, (outer_train, outer_test) in enumerate(outer_splits):
         splits_dict[i] = {
             "train": list(map(int, outer_train)),
             "test": list(map(int, outer_test)),
@@ -24,8 +24,8 @@ def split(
             x_train = x_df.iloc[outer_train]
             y_train = y_df.iloc[outer_train]
             splits_dict[i]["inner_split"] = {}
-            inner_split = inner_split.split(x_train, y_train)
-            for j, (inner_train, inner_val) in enumerate(inner_split):
+            inner_splits = inner_split.split(x_train, y_train)
+            for j, (inner_train, inner_val) in enumerate(inner_splits):
                 splits_dict[i]["inner_split"][j] = {
                     "train": list(map(int, inner_train)),
                     "val": list(map(int, inner_val)),

@@ -1,4 +1,5 @@
 import pandas as pd
+from sklearn.base import BaseEstimator
 from sklearn.preprocessing import MinMaxScaler, StandardScaler, PowerTransformer, QuantileTransformer
 
 
@@ -31,10 +32,22 @@ def remove_outliers(
 def scale(
         df: pd.DataFrame,
         scaler: str,
-) -> pd.DataFrame:
-    df_scaled = scalers[scaler]().fit_transform(X=df)
+) -> tuple[pd.DataFrame, BaseEstimator]:
+    scaler_init = scalers[scaler]()
+    df_scaled = scaler_init.fit_transform(X=df)
     return pd.DataFrame(
         df_scaled,
         columns=df.columns,
         index=df.index
-    )
+    ), scaler_init
+
+def fill_na(
+        df: pd.DataFrame,
+        fill_func: str = "median",
+) -> pd.DataFrame:
+    if fill_func == "median":
+        values = df.median(numeric_only=True)
+    else:
+        values = df.mean(numeric_only=True)
+    df.fillna(values, inplace=True)
+    return df
