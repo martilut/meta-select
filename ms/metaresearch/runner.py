@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from ms.metaresearch.data_preprocess import scale, fill_na
+from ms.metaresearch.data_preprocess import Preprocessor, cv_decorator
 from ms.metaresearch.selector import Selector
 from ms.utils.navigation import pjoin, rewrite_decorator
 
@@ -12,10 +12,9 @@ def run_selector(
         selector: Selector,
         features: pd.DataFrame,
         metrics: pd.DataFrame,
-        splits: dict,
-        scaler: str,
+        split: dict,
+        preprocessor: Preprocessor | None = None,
         k_best: int | None = None,
-        fill_func: str = "mean",
         save_path: Path | None = None,
         to_rewrite: bool = False,
 ) -> dict:
@@ -24,22 +23,23 @@ def run_selector(
 
     for target_model in metrics.columns:
         target_res = run_target(
+            x=features,
+            y=metrics,
+            split=split,
+            preprocessor=preprocessor,
+            to_agg=False,
             selector=selector,
-            features=features,
-            metrics=metrics,
-            splits=splits,
-            scaler=scaler,
             target_model=target_model,
             k_best=k_best,
-            fill_func=fill_func,
-            save_path=pjoin(save_path.parent, f"{target_model}.csv"),
+            save_path=pjoin(
+                save_path.parent,
+                f"{target_model}.csv"
+            ),
             to_rewrite=to_rewrite,
         )
-        result_dict[target_model] = {i:[] for i in splits}
-        for i in splits:
-            result_dict[target_model][i] = [
-                feat for feat in target_res.index if target_res.loc[feat, f"selected_{i}"] is True
-            ]
+        result_dict[target_model] = {i:[] for i in split}
+        for i in split:
+            result_dict[target_model][i] = target_res.loc[:, f"value_{i}"].dropna().index.to_list()
             k_best_safe = k_best if k_best is not None else 1
             print(k_best_safe)
             if len(result_dict[target_model][i]) < k_best_safe:
@@ -59,36 +59,26 @@ def run_selector(
 
 
 @rewrite_decorator
+@cv_decorator
 def run_target(
     selector: Selector,
-    features: pd.DataFrame,
-    metrics: pd.DataFrame,
-    splits: dict,
-    scaler: str,
     target_model: str,
+    x_train: pd.DataFrame,
+    y_train: pd.DataFrame,
+    preprocessor: Preprocessor | None = None,
     k_best: int | None = None,
-    fill_func: str = "mean",
+    inner_split: dict | None = None,
     **kwargs,
 ) -> pd.DataFrame:
     print(f"Processing target model {target_model}...")
-    dfs = []
-    for i in splits:
-        print(f"Processing split {i}...")
-        x_train = fill_na(features.iloc[splits[i]["train"]], fill_func=fill_func)
-        x_train, _ = scale(x_train, scaler)
-        y_train, _ = scale(metrics.iloc[splits[i]["train"]], scaler)
-        selected_df = selector.compute_select(
-            x=x_train,
-            y=y_train[target_model],
-            k_best=k_best,
-        )
-        selected_df.columns = [f"{col}_{i}" for col in selected_df.columns]
-        dfs.append(selected_df)
-    merged_df = pd.concat(
-        dfs,
-        axis=1
+    return selector.compute_select(
+        x=x_train,
+        y=y_train[target_model].to_frame(),
+        split=inner_split if selector.cv else None,
+        preprocessor=preprocessor,
+        to_agg=True,
+        k_best=k_best,
     )
-    return merged_df
 
 
 @rewrite_decorator

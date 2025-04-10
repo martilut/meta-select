@@ -1,6 +1,7 @@
 from abc import ABC, abstractmethod
 import pandas as pd
-from sklearn.utils.multiclass import type_of_target
+
+from ms.metaresearch.data_preprocess import cv_decorator, is_classif
 
 
 class Selector(ABC):
@@ -46,45 +47,25 @@ class Selector(ABC):
 
     def compute(
             self,
-            x: pd.DataFrame,
-            y: pd.DataFrame,
-            split: dict | None = None,
+            x_train: pd.DataFrame,
+            y_train: pd.DataFrame,
+            x_test: pd.DataFrame | None = None,
+            y_test: pd.DataFrame | None = None,
     ) -> pd.DataFrame:
-        if split is not None and self.cv:
-            res_list = []
-            for i in split:
-                x_train = x.iloc[split[i]["train"], :]
-                y_train = y.iloc[split[i]["train"], :]
-                x_test = x.iloc[split[i]["test"], :]
-                y_test = y.iloc[split[i]["test"], :]
-
-                if self.is_classif(y=y):
-                    res = self.compute_classification(
-                        x_train=x_train,
-                        y_train=y_train,
-                        x_test=x_test,
-                        y_test=y_test
-                    )
-                else:
-                    res = self.compute_regression(
-                        x_train=x_train,
-                        y_train=y_train,
-                        x_test=x_test,
-                        y_test=y_test
-                    )
-                res_list.append(res)
-            res = pd.concat(res_list).mean(axis=0)
+        if is_classif(y=y_train):
+            res = self.compute_classification(
+                x_train=x_train,
+                y_train=y_train,
+                x_test=x_test,
+                y_test=y_test,
+            )
         else:
-            if self.is_classif(y=y):
-                res = self.compute_classification(
-                    x_train=x,
-                    y_train=y
-                )
-            else:
-                res = self.compute_regression(
-                    x_train=x,
-                    y_train=y
-                )
+            res = self.compute_regression(
+                x_train=x_train,
+                y_train=y_train,
+                x_test=x_test,
+                y_test=y_test,
+            )
         return res
 
     def select(
@@ -99,36 +80,32 @@ class Selector(ABC):
             inplace=True,
             key=abs
         )
-        selected_df = filtered_df.dropna(axis="rows", how="any")
+        selected_df = filtered_df.dropna(axis="rows", how="any").copy()
         selected_features = selected_df.index.tolist()
         if k_best is not None and k_best < len(selected_features):
             selected_features = selected_features[:k_best]
-        selected_df["selected"] = [False] * len(selected_df)
-        selected_df.loc[selected_features, "selected"] = True
+            selected_df = selected_df.loc[selected_features]
         return selected_df
 
     @abstractmethod
     def __select__(self, res: pd.DataFrame) -> pd.DataFrame:
         ...
 
+    @cv_decorator
     def compute_select(
             self,
-            x: pd.DataFrame,
-            y: pd.DataFrame,
-            split: dict | None = None,
+            x_train: pd.DataFrame,
+            y_train: pd.DataFrame,
+            x_test: pd.DataFrame | None = None,
+            y_test: pd.DataFrame | None = None,
             k_best: int | None = None,
+            **kwargs,
     ) -> pd.DataFrame:
         res = self.compute(
-            x=x,
-            y=y,
-            split=split,
+            x_train=x_train,
+            y_train=y_train,
+            x_test=x_test,
+            y_test=y_test,
         )
 
         return self.select(res=res, k_best=k_best)
-
-    @staticmethod
-    def is_classif(
-            y: pd.Series
-    ) -> bool:
-        target_type = type_of_target(y)
-        return target_type in {"binary", "multiclass"}
