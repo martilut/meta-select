@@ -28,7 +28,7 @@ def split(
             for j, (inner_train, inner_val) in enumerate(inner_splits):
                 splits_dict[i]["inner_split"][j] = {
                     "train": list(map(int, inner_train)),
-                    "val": list(map(int, inner_val)),
+                    "test": list(map(int, inner_val)),
                 }
 
     return splits_dict
