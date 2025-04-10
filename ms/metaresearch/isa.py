@@ -1,12 +1,11 @@
 from dataclasses import dataclass
 
-import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
-
-from ms.utils.typing import NDArrayFloatT
 from scipy.optimize import minimize
 from scipy.spatial.distance import pdist
+
+from ms.utils.typing import NDArrayFloatT
 
 
 @dataclass
