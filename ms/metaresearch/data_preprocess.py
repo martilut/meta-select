@@ -1,53 +1,118 @@
 import pandas as pd
-from sklearn.base import BaseEstimator
-from sklearn.preprocessing import MinMaxScaler, StandardScaler, PowerTransformer, QuantileTransformer
+from sklearn.base import BaseEstimator, TransformerMixin
+from sklearn.compose import ColumnTransformer
+from sklearn.impute import SimpleImputer
+from sklearn.pipeline import Pipeline
+from sklearn.utils.multiclass import type_of_target
 
 
-scalers = {
-    "standard": StandardScaler,
-    "minmax": MinMaxScaler,
-    "power": PowerTransformer,
-    "quantile": QuantileTransformer
-}
+class Preprocessor(BaseEstimator, TransformerMixin):
+    def __init__(
+            self,
+            scaler: BaseEstimator = None,
+            strategy: str = 'mean',
+    ):
+        """
+        Preprocessing pipeline that imputes missing values and scales numerical features.
 
-def remove_outliers(
-        df: pd.DataFrame,
-        outlier_modifier: float = 1.0,
-) -> pd.DataFrame:
-    q1 = df.quantile(0.25, axis="index")
-    q3 = df.quantile(0.75, axis="index")
-    iqr = q3 - q1
+        Parameters:
+        - scaler: A scikit-learn scaler instance (e.g., StandardScaler(), MinMaxScaler()).
+        """
+        self.scaler = scaler
+        self.strategy = strategy
+        self.numeric_columns = None
+        self.column_transformer = None
 
-    lower = q1 - outlier_modifier * iqr
-    upper = q3 + outlier_modifier * iqr
+    def fit(self, X, y=None):
+        if not isinstance(X, pd.DataFrame):
+            raise ValueError("Input must be a pandas DataFrame")
 
-    for i, feature in enumerate(df.columns):
-        feature_col = df[feature]
-        feature_col[feature_col < lower[i]] = lower[i]
-        feature_col[feature_col > upper[i]] = upper[i]
-        df[feature] = feature_col
+        self.numeric_columns = X.columns.tolist()
 
-    return df
+        transformer_pipeline = Pipeline(steps=[
+            ('imputer', SimpleImputer(strategy=self.strategy)),
+            ('scaler', self.scaler)
+        ])
 
-def scale(
-        df: pd.DataFrame,
-        scaler: str,
-) -> tuple[pd.DataFrame, BaseEstimator]:
-    scaler_init = scalers[scaler]()
-    df_scaled = scaler_init.fit_transform(X=df)
-    return pd.DataFrame(
-        df_scaled,
-        columns=df.columns,
-        index=df.index
-    ), scaler_init
+        self.column_transformer = ColumnTransformer(
+            transformers=[
+                ('num', transformer_pipeline, self.numeric_columns)
+            ],
+            remainder='drop'
+        )
 
-def fill_na(
-        df: pd.DataFrame,
-        fill_func: str = "median",
-) -> pd.DataFrame:
-    if fill_func == "median":
-        values = df.median(numeric_only=True)
-    else:
-        values = df.mean(numeric_only=True)
-    df.fillna(values, inplace=True)
-    return df
+        self.column_transformer.fit(X)
+        return self
+
+    def transform(self, X):
+        if self.column_transformer is None:
+            raise RuntimeError("You must call fit before transform.")
+
+        transformed = self.column_transformer.transform(X)
+        return pd.DataFrame(transformed, columns=X.columns, index=X.index)
+
+
+def is_classif(y: pd.Series) -> bool:
+    target_type = type_of_target(y)
+    return target_type in {"binary", "multiclass"}
+
+def cv_decorator(func):
+    def wrapper(
+            *args,
+            **kwargs
+    ):
+        x: pd.DataFrame = kwargs.get("x", None)
+        y: pd.DataFrame = kwargs.get("y", None)
+        split: dict = kwargs.get("split", None)
+        preprocessor: Preprocessor = kwargs.get("preprocessor", None)
+        to_agg: bool = kwargs.get("to_agg", True)
+
+        if x is None or y is None or split is None:
+            return func(
+                x_train=x,
+                y_train=y,
+                *args,
+                **kwargs
+            )
+        cv_res = []
+        for i in split:
+            x_train = x.iloc[split[i]["train"], :]
+            y_train = y.iloc[split[i]["train"], :]
+            x_test = x.iloc[split[i]["test"], :]
+            y_test = y.iloc[split[i]["test"], :]
+
+            inner_split = split[i].get("inner_split", None)
+
+            print(f"Split {i}, "
+                  f"x_train: {x_train.shape}, "
+                  f"x_test: {x_test.shape}, "
+                  f"y_train: {y_train.shape}, "
+                  f"y_test: {y_test.shape}, "
+                  f"has inner_split: {inner_split is not None}")
+
+            if preprocessor is not None:
+                x_fitted = preprocessor.fit(x_train)
+                x_train = x_fitted.transform(x_train)
+                x_test = x_fitted.transform(x_test)
+                if not is_classif(y=y_train):
+                    y_fitted = preprocessor.fit(y_train)
+                    y_train = y_fitted.transform(y_train)
+                    y_test = y_fitted.transform(y_test)
+
+            res = func(
+                x_train=x_train,
+                y_train=y_train,
+                x_test=x_test,
+                y_test=y_test,
+                inner_split=inner_split,
+                *args,
+                **kwargs
+            )
+            res.columns = [f"{col}_{i}" for col in res.columns]
+            cv_res.append(res)
+        cv_res = pd.concat(cv_res, axis=1)
+        return cv_res.mean(
+            axis=1,
+            skipna=False
+        ).to_frame(name="value") if to_agg else cv_res
+    return wrapper
