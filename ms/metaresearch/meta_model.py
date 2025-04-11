@@ -1,141 +1,143 @@
-from typing import Callable
+from typing import Callable, Dict
+
 import optuna
 import pandas as pd
 from sklearn.base import BaseEstimator
-from sklearn.model_selection import GridSearchCV, cross_validate
-import warnings
 
-optuna.logging.set_verbosity(optuna.logging.WARNING)
-warnings.filterwarnings("ignore", category=UserWarning)
+from ms.metaresearch.data_preprocess import cv_decorator, Preprocessor
+from ms.utils.navigation import rewrite_decorator
 
 
 class MetaModel:
     def __init__(
-            self,
-            name: str,
-            display_name: str,
-            model: BaseEstimator,
-            params: dict | None = None
+        self,
+        name: str,
+        display_name: str,
+        model: BaseEstimator,
+        params: dict | None = None,
     ):
         self.name = name
         self.display_name = display_name
         self.model = model
         self.params = params
 
-
+    @rewrite_decorator
     def run(
-            self,
-            x: pd.DataFrame,
-            y: pd.DataFrame,
-            splits: dict,
-            slices: dict,
-            opt_scoring: Callable,
-            model_scoring: dict[str, Callable],
-            opt_method: str | None,
-            opt_cv: int,
-            n_trials: int
-    ) -> dict[str, dict]:
+        self,
+        x: pd.DataFrame,
+        y: pd.DataFrame,
+        split: dict,
+        opt_scoring: Callable,
+        model_scoring: Dict[str, Callable],
+        n_trials: int,
+        preprocessor: Preprocessor,
+        subset: dict | None = None,
+        **kwargs
+    ) -> pd.DataFrame:
         print(f"Meta-model: {self.name}")
-        default_params = self.model.get_params()
-        model_scores = {}
-        for model_name in y.columns:
-            model_scores[model_name] = {}
 
-        for target_model in y.columns:
-            print(f"Training on target model {target_model}")
-            self.model.set_params(**default_params)
-            if opt_method == "optuna" and self.params:
-                print(f"Optimizing hyperparameters for {target_model} using Optuna")
-                study = optuna.create_study(direction="maximize")
-                study.optimize(
-                    lambda trial: self.objective(
-                        trial=trial,
-                        x=x,
-                        y=y.loc[:, target_model],
-                        scoring=opt_scoring,
-                        cv=opt_cv
-                    ),
-                    n_trials=n_trials
-                )
-                best_params = study.best_params
-            elif opt_method == "grid_search" and self.params:
-                print(f"Using GridSearchCV for {target_model}")
-                grid_search = GridSearchCV(
-                    self.model,
-                    self.params,
-                    cv=opt_cv,
-                    scoring=opt_scoring
-                )
-                grid_search.fit(x, y[target_model])
-                best_params = grid_search.best_params_
-            else:
-                best_params = self.params
-            self.model.set_params(**best_params)
-            cv_results = self.custom_cv(
-                estimator=self.model,
-                x_df=x,
-                y_df=y.loc[:, target_model],
-                splits=splits,
-                slices=slices,
-                scoring=model_scoring,
-                target_model=target_model,
-            )
-            model_scores[target_model]["cv"] = cv_results
-            if best_params is not None:
-                model_scores[target_model]["params"] = best_params
-            else:
-                model_scores[target_model]["params"] = self.model.get_params()
+        return self.train_and_evaluate(
+            x=x,
+            y=y,
+            split=split,
+            subset=subset,
+            preprocessor=preprocessor,
+            to_agg=False,
+            opt_scoring=opt_scoring,
+            model_scoring=model_scoring,
+            n_trials=n_trials,
+        )
 
-        return model_scores
+    @cv_decorator
+    def train_and_evaluate(
+        self,
+        x_train: pd.DataFrame,
+        y_train: pd.DataFrame,
+        x_test: pd.DataFrame,
+        y_test: pd.DataFrame,
+        inner_split: dict,
+        opt_scoring: Callable,
+        model_scoring: Dict[str, Callable],
+        n_trials: int,
+        **kwargs
+    ) -> pd.DataFrame:
+        best_params = self.optimize_hyperparameters(
+            x=x_train,
+            y=y_train,
+            split=inner_split,
+            scoring=opt_scoring,
+            n_trials=n_trials
+        )
+        self.model.set_params(**best_params)
+
+        self.model.fit(x_train, y_train)
+        result = pd.DataFrame(
+            index=[name for name in model_scoring.keys()],
+            columns=["train", "test"]
+        )
+        for name, func in model_scoring.items():
+            train_score = func(self.model, x_train, y_train)
+            test_score = func(self.model, x_test, y_test)
+            result.loc[name] = [train_score, test_score]
+        return result
+
+    def optimize_hyperparameters(
+        self,
+        x: pd.DataFrame,
+        y: pd.DataFrame,
+        split: dict,
+        scoring: Callable,
+        n_trials: int,
+    ) -> dict:
+        if not self.params:
+            return self.model.get_params()
+
+        print("Optimizing hyperparameters using Optuna")
+        study = optuna.create_study(direction="maximize")
+        study.optimize(
+            lambda trial: self.objective(
+                trial=trial,
+                x=x,
+                y=y,
+                split=split,
+                scoring=scoring
+            ),
+            n_trials=n_trials,
+        )
+        return study.best_params
 
     def objective(
-            self,
-            trial: optuna.Trial,
-            x: pd.DataFrame,
-            y: pd.Series,
-            scoring: str,
-            cv: int
-    ):
-        param_grid = {}
-
-        for param, values in self.params.items():
-            if all(isinstance(v, int) for v in values):
-                param_grid[param] = trial.suggest_int(param, min(values), max(values))
-            elif all(isinstance(v, float) for v in values):
-                param_grid[param] = trial.suggest_float(param, min(values), max(values))
-            elif all(isinstance(v, (int, float)) for v in values):
-                param_grid[param] = trial.suggest_float(param, float(min(values)), float(max(values)))
-            else:
-                param_grid[param] = trial.suggest_categorical(param, values)
+        self,
+        trial: optuna.Trial,
+        x: pd.DataFrame,
+        y: pd.DataFrame,
+        split: dict,
+        scoring: Callable,
+    ) -> float:
+        param_grid = {
+            param: (
+                trial.suggest_int(param, min(values), max(values))
+                if all(isinstance(v, int) for v in values)
+                else trial.suggest_float(param, min(values), max(values))
+                if all(isinstance(v, float) for v in values)
+                else trial.suggest_categorical(param, values)
+            )
+            for param, values in self.params.items()
+        }
 
         self.model.set_params(**param_grid)
-        cv_results = cross_validate(
-            estimator=self.model,
-            X=x,
-            y=y,
-            scoring=scoring,
-            cv=cv,
-            error_score="raise",
-        )
-        return cv_results["test_score"].mean()
 
-    @staticmethod
-    def custom_cv(estimator, x_df, y_df, splits, slices, scoring, target_model) -> dict:
-        res = {}
-        for score_name, score_func in scoring.items():
-            res[f"test_{score_name}"] = []
-            for i in splits:
-                train = splits[i]["train"]
-                test = splits[i]["test"]
-                estimator.fit(
-                    x_df.iloc[train, :].loc[:, slices[i][target_model]],
-                    y_df.iloc[train]
-                )
-                res[f"test_{score_name}"].append(
-                    score_func(
-                        estimator=estimator,
-                        X=x_df.iloc[test, :].loc[:, slices[i][target_model]],
-                        y_true=y_df.iloc[test],
-                    )
-                )
-        return res
+        @cv_decorator
+        def optuna_score(
+                x_train: pd.DataFrame,
+                y_train: pd.DataFrame,
+                x_test: pd.DataFrame,
+                y_test: pd.DataFrame,
+                **kwargs
+        ):
+            self.model.fit(x_train, y_train)
+            score = scoring(self.model, x_test, y_test)
+            return pd.DataFrame([{"score": score}])
+
+        scores_df = optuna_score(x=x, y=y, split=split, to_agg=True)
+        return scores_df.iloc[0, 0]
