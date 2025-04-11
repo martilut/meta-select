@@ -64,6 +64,7 @@ def cv_decorator(func):
         x: pd.DataFrame = kwargs.get("x", None)
         y: pd.DataFrame = kwargs.get("y", None)
         split: dict = kwargs.get("split", None)
+        subset: dict = kwargs.get("subset", None)
         preprocessor: Preprocessor = kwargs.get("preprocessor", None)
         to_agg: bool = kwargs.get("to_agg", True)
 
@@ -81,14 +82,11 @@ def cv_decorator(func):
             x_test = x.iloc[split[i]["test"], :]
             y_test = y.iloc[split[i]["test"], :]
 
-            inner_split = split[i].get("inner_split", None)
+            if subset is not None:
+                x_train = x_train.loc[:, subset[i]]
+                x_test = x_test.loc[:, subset[i]]
 
-            print(f"Split {i}, "
-                  f"x_train: {x_train.shape}, "
-                  f"x_test: {x_test.shape}, "
-                  f"y_train: {y_train.shape}, "
-                  f"y_test: {y_test.shape}, "
-                  f"has inner_split: {inner_split is not None}")
+            inner_split = split[i].get("inner_split", None)
 
             if preprocessor is not None:
                 x_fitted = preprocessor.fit(x_train)
@@ -98,6 +96,15 @@ def cv_decorator(func):
                     y_fitted = preprocessor.fit(y_train)
                     y_train = y_fitted.transform(y_train)
                     y_test = y_fitted.transform(y_test)
+
+            y_type = "class" if is_classif(y_train) else "reg"
+            print(f"Split {i}, "
+                  f"x_train: {x_train.shape}, "
+                  f"x_test: {x_test.shape}, "
+                  f"y_train: {y_train.shape}, "
+                  f"y_test: {y_test.shape}, "
+                  f"y type: {y_type}, "
+                  f"has inner_split: {inner_split is not None}")
 
             res = func(
                 x_train=x_train,
