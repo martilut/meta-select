@@ -7,7 +7,7 @@ from sklearn.preprocessing import KBinsDiscretizer
 from ms.metadataset.handler_info import HandlerInfo
 from ms.metadataset.data_handler import MetricsHandler
 from ms.metadataset.data_source import DataSource
-from ms.metaresearch.model_type import ModelType
+from ms.metadataset.model_type import ModelType
 from ms.utils.typing import NDArrayFloatT
 
 
@@ -18,11 +18,11 @@ class TargetBuilder(MetricsHandler, ABC):
 
     @property
     def load_root(self) -> str:
-        return self.config.resources
+        return self.config.resources_path
 
     @property
     def save_root(self) -> str:
-        return self.config.resources
+        return self.config.resources_path
 
     @property
     def class_folder(self) -> str:

@@ -2,7 +2,7 @@ import pandas as pd
 from sklearn.linear_model import LogisticRegression, Lasso
 from xgboost import XGBClassifier, XGBRegressor
 
-from ms.metaresearch.selector import Selector
+from ms.selection.selector import Selector
 
 
 class XGBSelector(Selector):

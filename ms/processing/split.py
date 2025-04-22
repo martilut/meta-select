@@ -1,16 +1,36 @@
 from random import sample
 
 import pandas as pd
-from sklearn.model_selection import KFold, ShuffleSplit
+from sklearn.model_selection import KFold, StratifiedKFold
+
+from ms.utils.navigation import rewrite_decorator
+from ms.utils.utils import is_classif
 
 
-def split(
+@rewrite_decorator
+def split_k_fold(
         x_df: pd.DataFrame,
         y_df: pd.DataFrame,
-        outer_split: KFold | ShuffleSplit,
-        inner_split: KFold | ShuffleSplit | None = None,
+        outer_k: int = 5,
+        inner_k: int | None = 3,
+        seed: int = None,
+        shuffle: bool = True,
+        **kwargs,
 ) -> dict[int, dict[str, list[int]]]:
     splits_dict = {}
+
+    if is_classif(y=y_df):
+        outer_split = StratifiedKFold(
+            n_splits=outer_k,
+            shuffle=shuffle,
+            random_state=seed,
+        )
+    else:
+        outer_split = KFold(
+            n_splits=outer_k,
+            shuffle=shuffle,
+            random_state=seed,
+        )
 
     outer_splits = outer_split.split(x_df, y_df)
 
@@ -20,7 +40,19 @@ def split(
             "test": list(map(int, outer_test)),
         }
 
-        if inner_split is not None:
+        if inner_k is not None:
+            if is_classif(y=y_df):
+                inner_split = StratifiedKFold(
+                    n_splits=inner_k,
+                    shuffle=shuffle,
+                    random_state=seed,
+                )
+            else:
+                inner_split = KFold(
+                    n_splits=inner_k,
+                    shuffle=shuffle,
+                    random_state=seed,
+                )
             x_train = x_df.iloc[outer_train]
             y_train = y_df.iloc[outer_train]
             splits_dict[i]["inner_split"] = {}

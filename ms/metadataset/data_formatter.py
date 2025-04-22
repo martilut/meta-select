@@ -22,11 +22,11 @@ class MetadataFormatter(FeaturesHandler, MetricsHandler, ABC):
 
     @property
     def load_root(self) -> str:
-        return self.config.resources
+        return self.config.resources_path
 
     @property
     def save_root(self) -> str:
-        return self.config.resources
+        return self.config.resources_path
 
     def __init__(
             self,

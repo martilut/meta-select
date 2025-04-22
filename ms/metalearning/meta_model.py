@@ -4,7 +4,8 @@ import optuna
 import pandas as pd
 from sklearn.base import BaseEstimator
 
-from ms.metaresearch.data_preprocess import cv_decorator, Preprocessor
+from ms.processing.cv import cv_decorator
+from ms.processing.preprocess import Preprocessor
 from ms.utils.navigation import rewrite_decorator
 
 
@@ -15,11 +16,14 @@ class MetaModel:
         display_name: str,
         model: BaseEstimator,
         params: dict | None = None,
+        tune: bool = False,
     ):
         self.name = name
         self.display_name = display_name
         self.model = model
         self.params = params
+        self.tune = tune
+        self.best_params = None  # To store best parameters after optimization
 
     @rewrite_decorator
     def run(
@@ -30,7 +34,7 @@ class MetaModel:
         opt_scoring: Callable,
         model_scoring: Dict[str, Callable],
         n_trials: int,
-        preprocessor: Preprocessor,
+        preprocessor: Preprocessor | None = None,
         subset: dict | None = None,
         **kwargs
     ) -> pd.DataFrame:
@@ -67,10 +71,11 @@ class MetaModel:
             split=inner_split,
             scoring=opt_scoring,
             n_trials=n_trials
-        )
+        ) if self.tune else self.model.get_params()
+        self.best_params = best_params  # Log best parameters
         self.model.set_params(**best_params)
 
-        self.model.fit(x_train, y_train)
+        self.model.fit(x_train.to_numpy(), y_train.to_numpy())
         result = pd.DataFrame(
             index=[name for name in model_scoring.keys()],
             columns=["train", "test"]
@@ -141,3 +146,7 @@ class MetaModel:
 
         scores_df = optuna_score(x=x, y=y, split=split, to_agg=True)
         return scores_df.iloc[0, 0]
+
+    @rewrite_decorator
+    def save_params(self, *args, **kwargs) -> dict:
+        return self.best_params if self.best_params else self.model.get_params()

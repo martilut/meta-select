@@ -27,6 +27,13 @@ def has_suffix(s: str) -> bool:
 def pjoin(*args) -> Path:
     return Path(join(*args))
 
+def get_file_name(prefix: str, suffix: str | None = None):
+    if suffix is not None:
+        res = f"{prefix}__{suffix}"
+    else:
+        res = f"{prefix}"
+    return res
+
 
 class ResultType(ABC):
     @property
@@ -117,6 +124,7 @@ def rewrite_decorator(func):
     def wrapper(*args, **kwargs):
         save_path = kwargs.get("save_path", Path())
         to_rewrite = kwargs.get("to_rewrite", False)
+        save_idx = kwargs.get("save_idx", 0)
 
         if not to_rewrite and save_path.exists():
             print(f"File {save_path} already exists. Skipping...")
@@ -127,6 +135,9 @@ def rewrite_decorator(func):
         )
         if save_path is not None:
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
-            save(data=res, path=save_path)
+            if isinstance(res, (pd.DataFrame, dict)):
+                save(data=res, path=save_path)
+            else:
+                save(data=res[save_idx], path=save_path)
         return res
     return wrapper

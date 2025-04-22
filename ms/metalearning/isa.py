@@ -5,6 +5,7 @@ import pandas as pd
 from scipy.optimize import minimize
 from scipy.spatial.distance import pdist
 
+from ms.processing.preprocess import Preprocessor
 from ms.utils.typing import NDArrayFloatT
 
 
@@ -28,7 +29,7 @@ class PILOTResult:
 class InstanceSpaceAnalysis:
     def __init__(
             self,
-            n_tries: int,
+            n_tries: int = 10,
     ):
         self.n_tries = n_tries
 
@@ -37,10 +38,17 @@ class InstanceSpaceAnalysis:
             self,
             features: pd.DataFrame,
             metrics: pd.DataFrame,
+            preprocessor: Preprocessor | None = None,
     ) -> PILOTResult:
         print("Started PILOT")
-        x = features.to_numpy(copy=True)
-        y = metrics.to_numpy(copy=True)
+        if preprocessor is not None:
+            x = preprocessor.fit_transform(features)
+            y = preprocessor.fit_transform(metrics)
+        else:
+            x = features
+            y = metrics
+        x = x.to_numpy(copy=True)
+        y = y.to_numpy(copy=True)
         n = x.shape[1]
         x_bar = np.hstack((x, y))
         m = x_bar.shape[1]

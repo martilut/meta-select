@@ -1,7 +1,8 @@
 from abc import ABC, abstractmethod
 import pandas as pd
 
-from ms.metaresearch.data_preprocess import cv_decorator, is_classif
+from ms.processing.cv import cv_decorator
+from ms.utils.utils import is_classif
 
 
 class Selector(ABC):

@@ -1,9 +1,9 @@
 import pandas as pd
 from scipy.stats import pearsonr, spearmanr
-from sklearn.feature_selection import f_classif, mutual_info_classif, chi2, mutual_info_regression
+from sklearn.feature_selection import f_classif, mutual_info_classif, chi2, mutual_info_regression, f_regression
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
-from ms.metaresearch.selector import Selector
+from ms.selection.selector import Selector
 
 
 class CorrelationSelector(Selector):
@@ -208,7 +208,10 @@ class FValueSelector(Selector):
             y_test: pd.DataFrame | None = None,
             task: str = "class",
     ) -> pd.DataFrame:
-        f_statistic, p_values = f_classif(X=x_train, y=y_train)
+        if task == "class":
+            f_statistic, p_values = f_classif(X=x_train, y=y_train)
+        else:
+            f_statistic, p_values = f_regression(X=x_train, y=y_train)
         res = pd.DataFrame(index=x_train.columns)
         res["value"] = f_statistic
         res["p"] = p_values

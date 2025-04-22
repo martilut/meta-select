@@ -1,6 +1,6 @@
 import pandas as pd
 
-from ms.metaresearch.selector import Selector
+from ms.selection.selector import Selector
 
 
 class BaseSelector(Selector):

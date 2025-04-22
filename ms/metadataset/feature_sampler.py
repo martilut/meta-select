@@ -29,11 +29,11 @@ class FeatureCrafter(DataHandler):
 
     @property
     def save_root(self) -> str:
-        return self.config.resources
+        return self.config.resources_path
 
     @property
     def load_root(self) -> str:
-        return self.config.resources
+        return self.config.resources_path
 
     @property
     def class_folder(self) -> str:

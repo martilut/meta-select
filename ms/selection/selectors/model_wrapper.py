@@ -1,35 +1,29 @@
-from abc import ABC
-
 import numpy as np
 import pandas as pd
+from sklearn.base import BaseEstimator
 from sklearn.ensemble import RandomForestRegressor
 from sklearn.feature_selection import RFE
 
-from ms.metaresearch.meta_model import MetaModel
-from ms.metaresearch.selector import Selector
+from ms.metalearning.meta_model import MetaModel
+from ms.selection.selector import Selector
 
 
-class ModelWrapper(ABC):
+class RFESelector(Selector):
     def __init__(
             self,
-            model: MetaModel,
-    ):
-        self.model = model
-
-class RFESelector(Selector, ModelWrapper):
-    def __init__(
-            self,
-            model: MetaModel,
+            model: BaseEstimator,
             rank_threshold: float = 1.0,
+            name: str = "rfe",
             cv: bool = False,
     ) -> None:
-        super().__init__(model=model)
         super().__init__(cv=cv)
+        self.model = model
         self.rank_threshold = rank_threshold
+        self._name = name
 
     @property
     def name(self) -> str:
-        return "rfe"
+        return self._name
 
     def compute_generic(
             self,
@@ -43,18 +37,18 @@ class RFESelector(Selector, ModelWrapper):
         rfe.fit(X=x_train, y=y_train)
 
         res = pd.DataFrame(index=x_train.columns)
-        res["rfe_fi"] = rfe.ranking_
+        res["value"] = rfe.ranking_
 
         return res
 
     def __select__(self, res: pd.DataFrame) -> pd.DataFrame:
-        for i, rank in enumerate(res["rfe_fi"]):
+        for i, rank in enumerate(res["value"]):
             if rank > self.rank_threshold:
                 res.iloc[i, 0] = None
         return res
 
 
-class RK_RFE(Selector, ModelWrapper):
+class RK_RFE(Selector):
     @property
     def name(self) -> str:
         return "rk_rfe"
@@ -66,7 +60,7 @@ class RK_RFE(Selector, ModelWrapper):
             ntree: int = 200
     ):
         super().__init__(cv=cv)
-        super().__init__(model=model)
+        self.model = model
         self.ntree = ntree
 
     def compute_generic(

@@ -3,11 +3,11 @@ from pathlib import Path
 
 import pandas as pd
 
-from ms.metadataset.navigation_config import NavigationConfig
+from ms.config.navigation_config import NavigationConfig
 from ms.metadataset.data_source import SourceBased
 from ms.metadataset.handler_info import HandlerInfo
 from ms.utils.debug import Debuggable
-from ms.utils.navigation import load, save, get_path, rewrite_decorator
+from ms.utils.navigation import load, save, get_path, rewrite_decorator, get_file_name
 
 
 class DataHandler(SourceBased, Debuggable, ABC):
@@ -91,7 +91,7 @@ class DataHandler(SourceBased, Debuggable, ABC):
         folders += [
             self.get_name(name=folder) for folder in inner_folders
         ]
-        file_name = self.get_file_name(prefix=prefix, suffix=suffix)
+        file_name = get_file_name(prefix=prefix, suffix=suffix)
         path = get_path(
             folders=folders,
             file_name=file_name,
@@ -242,14 +242,6 @@ class DataHandler(SourceBased, Debuggable, ABC):
         ) if path is None else path
         return save(data=samples, path=json_path, file_type="json")
 
-    @staticmethod
-    def get_file_name(prefix: str, suffix: str | None = None):
-        if suffix is not None:
-            res = f"{prefix}__{suffix}"
-        else:
-            res = f"{prefix}"
-        return res
-
 
 class FeaturesHandler(DataHandler):
     def handle_features(
@@ -272,7 +264,6 @@ class FeaturesHandler(DataHandler):
         return self.wrap_features(
             load_path=load_path,
             save_path=save_path,
-            to_rewrite=to_rewrite,
         )
 
     @rewrite_decorator
@@ -317,7 +308,6 @@ class MetricsHandler(DataHandler):
         return self.wrap_metrics(
             load_path=load_path,
             save_path=save_path,
-            to_rewrite=to_rewrite,
         )
 
     @rewrite_decorator
