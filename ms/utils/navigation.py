@@ -1,7 +1,7 @@
 import json
 import os
 from abc import ABC, abstractmethod
-from os.path import join as pjoin
+from os.path import join
 from pathlib import Path
 from typing import Any
 
@@ -23,6 +23,16 @@ def get_suffix(s: str) -> str:
 
 def has_suffix(s: str) -> bool:
     return "__" in s
+
+def pjoin(*args) -> Path:
+    return Path(join(*args))
+
+def get_file_name(prefix: str, suffix: str | None = None):
+    if suffix is not None:
+        res = f"{prefix}__{suffix}"
+    else:
+        res = f"{prefix}"
+    return res
 
 
 class ResultType(ABC):
@@ -80,10 +90,21 @@ result_types = {
     "png": PNGType(),
 }
 
-def load(path: Path, file_type: str) -> Any:
+def load(
+        path: Path,
+        file_type: str | None = None
+) -> Any:
+    if file_type is None:
+        file_type = path.name.split(".")[-1]
     return result_types[file_type].load(path=path)
 
-def save(data: Any, path: Path, file_type: str,) -> None:
+def save(
+        data: Any,
+        path: Path,
+        file_type: str | None = None,
+) -> None:
+    if file_type is None:
+        file_type = path.name.split(".")[-1]
     path.parent.mkdir(exist_ok=True, parents=True)
     result_types[file_type].save(path=path, data=data)
 
@@ -100,20 +121,23 @@ def get_path(
     return Path(path)
 
 def rewrite_decorator(func):
-    def wrapper(
-            self,
-            save_path: Path,
-            to_rewrite: bool,
-            *args,
-            **kwargs
-    ):
+    def wrapper(*args, **kwargs):
+        save_path = kwargs.get("save_path", Path())
+        to_rewrite = kwargs.get("to_rewrite", False)
+        save_idx = kwargs.get("save_idx", 0)
+
         if not to_rewrite and save_path.exists():
-            return
-        os.makedirs(os.path.dirname(save_path), exist_ok=True)
-        return func(
-            self,
-            save_path=save_path,
+            print(f"File {save_path} already exists. Skipping...")
+            return load(save_path)
+        res = func(
             *args,
             **kwargs
         )
+        if save_path is not None:
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            if isinstance(res, (pd.DataFrame, dict)):
+                save(data=res, path=save_path)
+            else:
+                save(data=res[save_idx], path=save_path)
+        return res
     return wrapper

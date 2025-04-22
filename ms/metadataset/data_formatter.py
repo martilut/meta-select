@@ -2,9 +2,9 @@ from abc import ABC
 
 import pandas as pd
 
-from ms.handler.handler_info import HandlerInfo
-from ms.handler.data_handler import FeaturesHandler, MetricsHandler
-from ms.handler.data_source import TabzillaSource
+from ms.metadataset.handler_info import HandlerInfo
+from ms.metadataset.data_handler import FeaturesHandler, MetricsHandler
+from ms.metadataset.data_source import TabzillaSource
 
 
 class MetadataFormatter(FeaturesHandler, MetricsHandler, ABC):
@@ -22,11 +22,11 @@ class MetadataFormatter(FeaturesHandler, MetricsHandler, ABC):
 
     @property
     def load_root(self) -> str:
-        return self.config.resources
+        return self.config.resources_path
 
     @property
     def save_root(self) -> str:
-        return self.config.resources
+        return self.config.resources_path
 
     def __init__(
             self,

@@ -4,9 +4,9 @@ from statistics import median
 import numpy as np
 import pandas as pd
 
-from ms.handler.handler_info import HandlerInfo
-from ms.handler.data_handler import FeaturesHandler, MetricsHandler
-from ms.handler.data_source import TabzillaSource
+from ms.metadataset.handler_info import HandlerInfo
+from ms.metadataset.data_handler import FeaturesHandler, MetricsHandler
+from ms.metadataset.data_source import TabzillaSource
 from ms.utils.metadata import remove_constant_features
 
 
@@ -17,11 +17,11 @@ class MetadataFilter(FeaturesHandler, MetricsHandler, ABC):
 
     @property
     def load_root(self) -> str:
-        return self.config.resources
+        return self.config.resources_path
 
     @property
     def save_root(self) -> str:
-        return self.config.resources
+        return self.config.resources_path
 
     @property
     def class_folder(self) -> str:
@@ -84,7 +84,6 @@ class TabzillaFilter(MetadataFilter):
         self.__remove_features_by_key__(features_dataset=filtered_features)
         self.__remove_unsuitable_features__(features_dataset=filtered_features)
         self.__filter_outliers__(features_dataset=filtered_features)
-        self.__fill_undefined_values__(features_dataset=filtered_features)
         remove_constant_features(features_dataset=filtered_features)
         filtered_features = self.__remove_duplicates__(features_dataset=filtered_features)
 

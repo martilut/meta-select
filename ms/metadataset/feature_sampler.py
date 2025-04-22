@@ -2,8 +2,8 @@ from random import sample
 
 import numpy as np
 
-from ms.handler.data_handler import DataHandler
-from ms.handler.data_source import DataSource
+from ms.metadataset.data_handler import DataHandler
+from ms.metadataset.data_source import DataSource
 from ms.utils.typing import NDArrayFloatT
 
 
@@ -29,11 +29,11 @@ class FeatureCrafter(DataHandler):
 
     @property
     def save_root(self) -> str:
-        return self.config.resources
+        return self.config.resources_path
 
     @property
     def load_root(self) -> str:
-        return self.config.resources
+        return self.config.resources_path
 
     @property
     def class_folder(self) -> str:
