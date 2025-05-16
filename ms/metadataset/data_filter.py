@@ -10,7 +10,7 @@ from ms.metadataset.data_source import TabzillaSource
 from ms.utils.metadata import remove_constant_features
 
 
-class MetadataFilter(FeaturesHandler, MetricsHandler, ABC):
+class DataFilter(FeaturesHandler, MetricsHandler, ABC):
     @property
     def class_name(self) -> str:
         return "filter"
@@ -44,7 +44,7 @@ class MetadataFilter(FeaturesHandler, MetricsHandler, ABC):
         )
 
 
-class TabzillaFilter(MetadataFilter):
+class TabzillaFilter(DataFilter):
     @property
     def source(self) -> TabzillaSource:
         return TabzillaSource()
