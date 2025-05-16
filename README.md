@@ -1,6 +1,6 @@
-# Meta-Feature Selector
+# Meta-Select
 
-**Meta-Feature Selector** is a Python package for selecting a subset of the most informative features from a meta-dataset.
+**Meta-Select** is a Python package for selecting a subset of the most informative features from a meta-dataset.
 
 ---
 ## Features
