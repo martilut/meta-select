@@ -1,13 +1,10 @@
+import numpy as np
 from sklearn.base import BaseEstimator, ClassifierMixin
 from sklearn.neural_network import MLPClassifier
-import numpy as np
+
 
 class MLPWithCoef(BaseEstimator, ClassifierMixin):
-    def __init__(
-            self,
-            model: MLPClassifier,
-            **kwargs
-    ):
+    def __init__(self, model: MLPClassifier, **kwargs):
         self.coef_ = None
         self.model = model
 

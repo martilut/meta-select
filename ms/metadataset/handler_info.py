@@ -5,10 +5,10 @@ from typing import Any
 @dataclass
 class HandlerInfo:
     def __init__(
-            self,
-            suffix: str | None = None,
-            feature_index: int | None = None,
-            metrics_index: int | None = None,
+        self,
+        suffix: str | None = None,
+        feature_index: int | None = None,
+        metrics_index: int | None = None,
     ):
         self.info = {
             "suffix": suffix,

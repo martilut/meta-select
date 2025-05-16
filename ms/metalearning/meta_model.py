@@ -10,6 +10,11 @@ from ms.utils.navigation import rewrite_decorator
 
 
 class MetaModel:
+    """
+    Wrapper class for machine learning models with built-in support for
+    hyperparameter tuning using Optuna and cross-validation evaluation.
+    """
+
     def __init__(
         self,
         name: str,
@@ -18,12 +23,22 @@ class MetaModel:
         params: dict | None = None,
         tune: bool = False,
     ):
+        """
+        Initialize a MetaModel instance.
+
+        Args:
+            name (str): Internal identifier for the model.
+            display_name (str): Human-readable name for display.
+            model (BaseEstimator): Scikit-learn compatible model.
+            params (dict | None): Hyperparameter search space.
+            tune (bool): Whether to tune hyperparameters.
+        """
         self.name = name
         self.display_name = display_name
         self.model = model
         self.params = params
         self.tune = tune
-        self.best_params = None  # To store best parameters after optimization
+        self.best_params = None
 
     @rewrite_decorator
     def run(
@@ -31,13 +46,29 @@ class MetaModel:
         x: pd.DataFrame,
         y: pd.DataFrame,
         split: dict,
-        opt_scoring: Callable,
+        opt_scoring: str,
         model_scoring: Dict[str, Callable],
         n_trials: int,
         preprocessor: Preprocessor | None = None,
         subset: dict | None = None,
-        **kwargs
+        **kwargs,
     ) -> pd.DataFrame:
+        """
+        Entry point for model training and evaluation.
+
+        Args:
+            x (pd.DataFrame): Feature data.
+            y (pd.DataFrame): Target data.
+            split (dict): Train/test split indices.
+            opt_scoring (str): Metric name for optimization.
+            model_scoring (dict): Metrics for model evaluation.
+            n_trials (int): Number of Optuna trials.
+            preprocessor (Preprocessor | None): Optional preprocessing pipeline.
+            subset (dict | None): Subset of features for each fold.
+
+        Returns:
+            pd.DataFrame: Evaluation results.
+        """
         print(f"Meta-model: {self.name}")
 
         return self.train_and_evaluate(
@@ -60,25 +91,28 @@ class MetaModel:
         x_test: pd.DataFrame,
         y_test: pd.DataFrame,
         inner_split: dict,
-        opt_scoring: Callable,
+        opt_scoring: str,
         model_scoring: Dict[str, Callable],
         n_trials: int,
-        **kwargs
+        **kwargs,
     ) -> pd.DataFrame:
-        best_params = self.optimize_hyperparameters(
-            x=x_train,
-            y=y_train,
-            split=inner_split,
-            scoring=model_scoring[opt_scoring],
-            n_trials=n_trials
-        ) if self.tune else self.model.get_params()
-        self.best_params = best_params  # Log best parameters
+        best_params = (
+            self.optimize_hyperparameters(
+                x=x_train,
+                y=y_train,
+                split=inner_split,
+                scoring=model_scoring[opt_scoring],
+                n_trials=n_trials,
+            )
+            if self.tune
+            else self.model.get_params()
+        )
+        self.best_params = best_params
         self.model.set_params(**best_params)
 
         self.model.fit(x_train.values, y_train.values.ravel())
         result = pd.DataFrame(
-            index=[name for name in model_scoring.keys()],
-            columns=["train", "test"]
+            index=[name for name in model_scoring.keys()], columns=["train", "test"]
         )
         for name, func in model_scoring.items():
             train_score = func(self.model, x_train.values, y_train.values.ravel())
@@ -101,11 +135,7 @@ class MetaModel:
         study = optuna.create_study(direction="maximize")
         study.optimize(
             lambda trial: self.objective(
-                trial=trial,
-                x=x,
-                y=y,
-                split=split,
-                scoring=scoring
+                trial=trial, x=x, y=y, split=split, scoring=scoring
             ),
             n_trials=n_trials,
         )
@@ -123,9 +153,11 @@ class MetaModel:
             param: (
                 trial.suggest_int(param, min(values), max(values))
                 if all(isinstance(v, int) for v in values)
-                else trial.suggest_float(param, min(values), max(values))
-                if all(isinstance(v, float) for v in values)
-                else trial.suggest_categorical(param, values)
+                else (
+                    trial.suggest_float(param, min(values), max(values))
+                    if all(isinstance(v, float) for v in values)
+                    else trial.suggest_categorical(param, values)
+                )
             )
             for param, values in self.params.items()
         }
@@ -134,11 +166,11 @@ class MetaModel:
 
         @cv_decorator
         def optuna_score(
-                x_train: pd.DataFrame,
-                y_train: pd.DataFrame,
-                x_test: pd.DataFrame,
-                y_test: pd.DataFrame,
-                **kwargs
+            x_train: pd.DataFrame,
+            y_train: pd.DataFrame,
+            x_test: pd.DataFrame,
+            y_test: pd.DataFrame,
+            **kwargs,
         ):
             self.model.fit(x_train.values, y_train.values.ravel())
             score = scoring(self.model, x_test.values, y_test.values.ravel())

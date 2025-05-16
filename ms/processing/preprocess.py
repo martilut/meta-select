@@ -7,9 +7,9 @@ from sklearn.pipeline import Pipeline
 
 class Preprocessor(BaseEstimator, TransformerMixin):
     def __init__(
-            self,
-            scaler: BaseEstimator = None,
-            strategy: str = 'mean',
+        self,
+        scaler: BaseEstimator = None,
+        strategy: str = "mean",
     ):
         """
         Preprocessing pipeline that imputes missing values and scales numerical features.
@@ -27,18 +27,14 @@ class Preprocessor(BaseEstimator, TransformerMixin):
             raise ValueError("Input must be a pandas DataFrame")
 
         self.numeric_columns = X.columns.tolist()
-        steps = [
-            ('imputer', SimpleImputer(strategy=self.strategy))
-        ]
+        steps = [("imputer", SimpleImputer(strategy=self.strategy))]
         if self.scaler is not None:
-            steps.append(('scaler', self.scaler))
+            steps.append(("scaler", self.scaler))
         transformer_pipeline = Pipeline(steps=steps)
 
         self.column_transformer = ColumnTransformer(
-            transformers=[
-                ('num', transformer_pipeline, self.numeric_columns)
-            ],
-            remainder='drop'
+            transformers=[("num", transformer_pipeline, self.numeric_columns)],
+            remainder="drop",
         )
 
         self.column_transformer.fit(X)

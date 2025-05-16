@@ -11,14 +11,14 @@ from ms.utils.navigation import pjoin, rewrite_decorator
 
 @rewrite_decorator
 def run_selector(
-        selector: Selector,
-        features: pd.DataFrame,
-        metrics: pd.DataFrame,
-        split: dict,
-        preprocessor: Preprocessor | None = None,
-        k_best: int | None = None,
-        save_path: Path | None = None,
-        to_rewrite: bool = False,
+    selector: Selector,
+    features: pd.DataFrame,
+    metrics: pd.DataFrame,
+    split: dict,
+    preprocessor: Preprocessor | None = None,
+    k_best: int | None = None,
+    save_path: Path | None = None,
+    to_rewrite: bool = False,
 ) -> dict:
     result_dict = {}
     errors_dict = {}
@@ -31,10 +31,7 @@ def run_selector(
         to_agg=False,
         selector=selector,
         k_best=k_best,
-        save_path=pjoin(
-            save_path.parent,
-            "data.csv"
-        ),
+        save_path=pjoin(save_path.parent, "data.csv"),
         to_rewrite=to_rewrite,
     )
 
@@ -47,10 +44,7 @@ def run_selector(
     if len(errors_dict) > 0:
         save_errors(
             errors_dict=errors_dict,
-            save_path=pjoin(
-                save_path.parent,
-                "errors.json"
-            ),
+            save_path=pjoin(save_path.parent, "errors.json"),
             to_rewrite=to_rewrite,
         )
 
@@ -80,14 +74,14 @@ def run_target(
 
 @rewrite_decorator
 def save_errors(
-        errors_dict: dict,
-        **kwargs: dict,
+    errors_dict: dict,
+    **kwargs: dict,
 ) -> dict:
     return errors_dict
 
 
 def aggregate_selector_folds(
-        df: pd.DataFrame,
+    df: pd.DataFrame,
 ) -> list[str]:
     df.index = df.iloc[:, 0]
     value_cols = [col for col in df.columns if col.startswith("value_")]

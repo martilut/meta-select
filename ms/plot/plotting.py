@@ -13,16 +13,16 @@ from ms.utils.navigation import rewrite_decorator
 
 @rewrite_decorator
 def save_isa_data(
-        selected_names: list[str],
-        features: pd.DataFrame,
-        metrics: pd.DataFrame,
-        res: PILOTResult,
-        selector_name: str,
-        save_plot: Path | None = None,
-        draw_convex_hull: bool = True,
-        discrete_data: bool = True,
-        *args,
-        **kwargs,
+    selected_names: list[str],
+    features: pd.DataFrame,
+    metrics: pd.DataFrame,
+    res: PILOTResult,
+    selector_name: str,
+    save_plot: Path | None = None,
+    draw_convex_hull: bool = True,
+    discrete_data: bool = True,
+    *args,
+    **kwargs,
 ) -> dict:
     data = {"selected": selected_names, "z": res.z.tolist()}
     isa_features = pd.DataFrame(res.z, index=features.index, columns=["z1", "z2"])
@@ -42,7 +42,7 @@ def save_isa_data(
         c=true_labels,
         cmap=cmap,
         alpha=0.7,
-        edgecolors="k"
+        edgecolors="k",
     )
 
     if draw_convex_hull:
@@ -54,7 +54,9 @@ def save_isa_data(
                 for simplex in hull.simplices:
                     plt.plot(points.iloc[simplex, 0], points.iloc[simplex, 1], "k-")
 
-    plt.title(f"{metrics.columns[0]}, {selector_name} | Silhouette Score: {silhouette:.4f}")
+    plt.title(
+        f"{metrics.columns[0]}, {selector_name} | Silhouette Score: {silhouette:.4f}"
+    )
     plt.xlabel("Z1")
     plt.ylabel("Z2")
     plt.colorbar(scatter, ticks=[0, 1], label="True Cluster")

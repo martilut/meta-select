@@ -28,17 +28,9 @@ def measure_runtime(func, *args, **kwargs):
 
 @rewrite_decorator
 def save_runtime(
-        runtime: float,
-        row: str,
-        column: str,
-        *args,
-        **kwargs
+    runtime: float, row: str, column: str, *args, **kwargs
 ) -> pd.DataFrame:
-    return pd.DataFrame(
-        [runtime],
-        index=[row],
-        columns=[column]
-    )
+    return pd.DataFrame([runtime], index=[row], columns=[column])
 
 
 def is_classif(y: pd.Series) -> bool:

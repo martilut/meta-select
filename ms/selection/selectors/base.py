@@ -9,12 +9,12 @@ class BaseSelector(Selector):
         return "base"
 
     def compute_generic(
-            self,
-            x_train: pd.DataFrame,
-            y_train: pd.DataFrame,
-            x_test: pd.DataFrame | None = None,
-            y_test: pd.DataFrame | None = None,
-            task: str = "class",
+        self,
+        x_train: pd.DataFrame,
+        y_train: pd.DataFrame,
+        x_test: pd.DataFrame | None = None,
+        y_test: pd.DataFrame | None = None,
+        task: str = "class",
     ) -> pd.DataFrame:
         res = pd.DataFrame(index=x_train.columns)
         res["value"] = [1.0] * len(x_train.columns)
