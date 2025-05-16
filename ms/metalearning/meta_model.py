@@ -153,9 +153,11 @@ class MetaModel:
             param: (
                 trial.suggest_int(param, min(values), max(values))
                 if all(isinstance(v, int) for v in values)
-                else trial.suggest_float(param, min(values), max(values))
-                if all(isinstance(v, float) for v in values)
-                else trial.suggest_categorical(param, values)
+                else (
+                    trial.suggest_float(param, min(values), max(values))
+                    if all(isinstance(v, float) for v in values)
+                    else trial.suggest_categorical(param, values)
+                )
             )
             for param, values in self.params.items()
         }

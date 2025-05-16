@@ -98,9 +98,9 @@ class ResultCollector:
                                 records.append(
                                     {
                                         "target_model": display_target_model,
-                                        "model_type": model_type.name
-                                        if model_type
-                                        else None,
+                                        "model_type": (
+                                            model_type.name if model_type else None
+                                        ),
                                         "selector": display_selector,
                                         "metamodel": metamodel,
                                         "metric": metric,

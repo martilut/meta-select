@@ -114,12 +114,16 @@ def run_models(
                     x=features,
                     y=target,
                     split=target_split,
-                    opt_scoring=ExperimentConfig.OPT_SCORING_CLASS
-                    if is_classif(target)
-                    else ExperimentConfig.OPT_SCORING_REG,
-                    model_scoring=ExperimentConfig.MODEL_SCORING_CLASS
-                    if is_classif(target)
-                    else ExperimentConfig.MODEL_SCORING_REG,
+                    opt_scoring=(
+                        ExperimentConfig.OPT_SCORING_CLASS
+                        if is_classif(target)
+                        else ExperimentConfig.OPT_SCORING_REG
+                    ),
+                    model_scoring=(
+                        ExperimentConfig.MODEL_SCORING_CLASS
+                        if is_classif(target)
+                        else ExperimentConfig.MODEL_SCORING_REG
+                    ),
                     n_trials=10,
                     preprocessor=ExperimentConfig.PREPROCESSOR,
                     subset=selector_data,
@@ -228,12 +232,16 @@ def run_isa(
                     x=isa_features,
                     y=target,
                     split=target_split,
-                    opt_scoring=ExperimentConfig.OPT_SCORING_CLASS
-                    if is_classif(target)
-                    else ExperimentConfig.OPT_SCORING_REG,
-                    model_scoring=ExperimentConfig.MODEL_SCORING_CLASS
-                    if is_classif(target)
-                    else ExperimentConfig.MODEL_SCORING_REG,
+                    opt_scoring=(
+                        ExperimentConfig.OPT_SCORING_CLASS
+                        if is_classif(target)
+                        else ExperimentConfig.OPT_SCORING_REG
+                    ),
+                    model_scoring=(
+                        ExperimentConfig.MODEL_SCORING_CLASS
+                        if is_classif(target)
+                        else ExperimentConfig.MODEL_SCORING_REG
+                    ),
                     n_trials=10,
                     preprocessor=ExperimentConfig.PREPROCESSOR,
                     subset=selector_data,

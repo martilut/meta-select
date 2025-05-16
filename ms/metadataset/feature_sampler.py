@@ -94,10 +94,10 @@ class FeatureCrafter(DataHandler):
                 f_name1, f_name2 = sample(cols, 2)
                 feature1 = features_dataset.loc[:, f_name1].to_numpy(copy=True)
                 feature2 = features_dataset.loc[:, f_name2].to_numpy(copy=True)
-                changed_dataset[
-                    f"so___{f_name1}_{f_name2}"
-                ] = self.add_second_order_feature(
-                    feature_first=feature1, feature_second=feature2
+                changed_dataset[f"so___{f_name1}_{f_name2}"] = (
+                    self.add_second_order_feature(
+                        feature_first=feature1, feature_second=feature2
+                    )
                 )
 
         percents = [random_percent, corrupted_percent, second_order_percent]

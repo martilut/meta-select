@@ -10,8 +10,7 @@ from ms.utils.utils import is_classif
 class Selector(ABC):
     @property
     @abstractmethod
-    def name(self) -> str:
-        ...
+    def name(self) -> str: ...
 
     def __init__(
         self,
@@ -45,8 +44,7 @@ class Selector(ABC):
         x_test: pd.DataFrame | None = None,
         y_test: pd.DataFrame | None = None,
         task: str = "class",
-    ) -> pd.DataFrame:
-        ...
+    ) -> pd.DataFrame: ...
 
     def compute(
         self,
@@ -86,8 +84,7 @@ class Selector(ABC):
         return selected_df
 
     @abstractmethod
-    def __select__(self, res: pd.DataFrame) -> pd.DataFrame:
-        ...
+    def __select__(self, res: pd.DataFrame) -> pd.DataFrame: ...
 
     @cv_decorator
     def compute_select(
