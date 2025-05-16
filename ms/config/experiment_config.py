@@ -20,7 +20,7 @@ from ms.metalearning.meta_model import MetaModel
 from ms.processing.preprocess import Preprocessor
 from ms.selection.mlp_wrapper import MLPWithCoef
 from ms.selection.selectors.base import BaseSelector
-from ms.selection.selectors.causal import CFSelector, TESelector
+from ms.selection.selectors.causal import TESelector
 from ms.selection.selectors.ensemble import EnsembleSelector
 from ms.selection.selectors.model_based import LassoSelector, XGBSelector
 from ms.selection.selectors.model_free import (
@@ -184,8 +184,6 @@ class ExperimentConfig:
         model_type="cf",
         cv=True,
     )
-
-    CF = CFSelector(cf_steps=100, train_epochs=100, dc=0.2, device="cpu", cv=False)
 
     RFE_CLASS_XGB = RFESelector(
         model=XGB_CLASS.model, rank_threshold=1.0, name="rfe_xgb", cv=False

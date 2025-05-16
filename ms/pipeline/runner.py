@@ -31,7 +31,7 @@ def run_selector(
         to_agg=False,
         selector=selector,
         k_best=k_best,
-        save_path=pjoin(save_path.parent, "data.csv"),
+        save_path=pjoin(save_path.parent, "data.csv") if save_path else None,
         to_rewrite=to_rewrite,
     )
 
