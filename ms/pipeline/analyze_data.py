@@ -1,79 +1,88 @@
 import os
-
 import numpy as np
 import pandas as pd
 
-from ms.config.pipeline_constants import CONF
+from ms.config.experiment_config import ExperimentConfig
 from ms.utils.navigation import pjoin
 
 
-def collect_results(root_folder):
-    records = []
+class ResultCollector:
+    def __init__(self, root_folder: str, metrics: list[str] = None):
+        """
+        :param root_folder: Path to the root directory of results.
+        :param metrics: List of metrics to process. E.g., ['mse', 'mae', 'r2', 'rmse'].
+        """
+        self.root_folder = root_folder
+        self.metrics = [m.lower() for m in metrics] if metrics else None
+        self.include_rmse = 'rmse' in self.metrics if self.metrics else False
+        self.records = []
 
-    for target_model in os.listdir(root_folder):
-        target_path = os.path.join(root_folder, target_model)
-        if not os.path.isdir(target_path):
-            continue
+    def _process_file(self, file_path: str, target_model: str, selector: str, metamodel: str):
+        df = pd.read_csv(file_path, index_col=0)
 
-        for selector in os.listdir(target_path):
-            selector_path = os.path.join(target_path, selector)
-            pred_path = os.path.join(selector_path, 'pred')
-            if not os.path.exists(pred_path):
-                continue
+        for metric, row in df.iterrows():
+            metric_lower = metric.lower()
 
-            for metamodel_file in os.listdir(pred_path):
-                if not metamodel_file.endswith('.csv'):
+            if self.metrics and metric_lower not in self.metrics:
+                if not (self.include_rmse and metric_lower == 'mse'):
                     continue
 
-                metamodel = metamodel_file.replace('.csv', '')
-                file_path = os.path.join(pred_path, metamodel_file)
+            fold_data = {'train': [], 'test': []}
+            rmse_data = {'train': [], 'test': []} if self.include_rmse and metric_lower == 'mse' else None
 
-                df = pd.read_csv(file_path, index_col=0)  # rows are metrics
-                for metric, row in df.iterrows():
-                    fold_data = {'train': [], 'test': []}
-                    rmse_data = {'train': [], 'test': []}
+            for col_name, value in row.items():
+                try:
+                    fold_type, _ = col_name.split('_')
+                    value = float(value)
+                    if fold_type in fold_data:
+                        fold_data[fold_type].append(value)
+                        if rmse_data is not None:
+                            rmse_data[fold_type].append(np.sqrt(value))
+                except ValueError:
+                    continue
 
-                    for col_name, value in row.items():
-                        try:
-                            fold_type, fold_num = col_name.split('_')
-                            value = float(value)
-                            if fold_type in fold_data:
-                                fold_data[fold_type].append(value)
-                                if metric.lower() == 'mse':
-                                    rmse_data[fold_type].append(np.sqrt(value))
-                        except ValueError:
-                            continue  # Skip malformed column names
+            for fold_type in ['train', 'test']:
+                values = fold_data[fold_type]
+                if values:
+                    record = {
+                        'target_model': target_model,
+                        'selector': selector,
+                        'metamodel': metamodel,
+                        'metric': metric,
+                        'fold_type': fold_type,
+                        'mean': np.mean(values),
+                        'std': np.std(values),
+                    }
 
-                    for fold_type in ['train', 'test']:
-                        values = fold_data[fold_type]
-                        rmse_values = rmse_data[fold_type]
-                        if values:
-                            values_series = pd.Series(values)
-                            record = {
-                                'target_model': target_model,
-                                'selector': selector,
-                                'metamodel': metamodel,
-                                'metric': metric,
-                                'fold_type': fold_type,
-                                'mean': values_series.mean(),
-                                'std': values_series.std()
-                            }
-                            if metric.lower() == 'mse' and rmse_values:
-                                rmse_series = pd.Series(rmse_values)
-                                record['rmse_mean'] = rmse_series.mean()
-                                record['rmse_std'] = rmse_series.std()
-                            else:
-                                record['rmse_mean'] = np.nan
-                                record['rmse_std'] = np.nan
+                    self.records.append(record)
 
-                            records.append(record)
+    def collect(self) -> pd.DataFrame:
+        for target_model in os.listdir(self.root_folder):
+            target_path = os.path.join(self.root_folder, target_model)
+            if not os.path.isdir(target_path):
+                continue
 
-    return pd.DataFrame.from_records(records)
+            for selector in os.listdir(target_path):
+                pred_path = os.path.join(target_path, selector, 'pred')
+                if not os.path.exists(pred_path):
+                    continue
+
+                for filename in os.listdir(pred_path):
+                    if not filename.endswith('.csv'):
+                        continue
+
+                    metamodel = filename.replace('.csv', '')
+                    file_path = os.path.join(pred_path, filename)
+                    self._process_file(file_path, target_model, selector, metamodel)
+
+        return pd.DataFrame.from_records(self.records)
 
 
 if __name__ == "__main__":
-    root_folder = pjoin(CONF.results_path, "tabzilla", "raw")  # Replace with your actual path
-    results_df = collect_results(root_folder)
+    root_path = pjoin(ExperimentConfig.CONF.results_path, "tabzilla", "raw")
+
+    collector = ResultCollector(root_folder=root_path, metrics=["mse", "r2", "rmse"])
+    results_df = collector.collect()
+
     print(results_df)
-    results_df.to_csv('all_results.csv', index=False)
-    # print("Results collected and saved to all_results.csv")
+    results_df.to_csv("all_results.csv", index=False)

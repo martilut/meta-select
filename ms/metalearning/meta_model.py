@@ -69,20 +69,20 @@ class MetaModel:
             x=x_train,
             y=y_train,
             split=inner_split,
-            scoring=opt_scoring,
+            scoring=model_scoring[opt_scoring],
             n_trials=n_trials
         ) if self.tune else self.model.get_params()
         self.best_params = best_params  # Log best parameters
         self.model.set_params(**best_params)
 
-        self.model.fit(x_train.to_numpy(), y_train.to_numpy())
+        self.model.fit(x_train.values, y_train.values.ravel())
         result = pd.DataFrame(
             index=[name for name in model_scoring.keys()],
             columns=["train", "test"]
         )
         for name, func in model_scoring.items():
-            train_score = func(self.model, x_train, y_train)
-            test_score = func(self.model, x_test, y_test)
+            train_score = func(self.model, x_train.values, y_train.values.ravel())
+            test_score = func(self.model, x_test.values, y_test.values.ravel())
             result.loc[name] = [train_score, test_score]
         return result
 
@@ -140,8 +140,8 @@ class MetaModel:
                 y_test: pd.DataFrame,
                 **kwargs
         ):
-            self.model.fit(x_train, y_train)
-            score = scoring(self.model, x_test, y_test)
+            self.model.fit(x_train.values, y_train.values.ravel())
+            score = scoring(self.model, x_test.values, y_test.values.ravel())
             return pd.DataFrame([{"score": score}])
 
         scores_df = optuna_score(x=x, y=y, split=split, to_agg=True)

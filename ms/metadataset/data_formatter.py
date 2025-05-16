@@ -7,7 +7,7 @@ from ms.metadataset.data_handler import FeaturesHandler, MetricsHandler
 from ms.metadataset.data_source import TabzillaSource
 
 
-class MetadataFormatter(FeaturesHandler, MetricsHandler, ABC):
+class DataFormatter(FeaturesHandler, MetricsHandler, ABC):
     @property
     def class_name(self) -> str:
         return "formatter"
@@ -41,7 +41,7 @@ class MetadataFormatter(FeaturesHandler, MetricsHandler, ABC):
         )
 
 
-class TabzillaFormatter(MetadataFormatter):
+class TabzillaFormatter(DataFormatter):
     @property
     def source(self) -> TabzillaSource:
         return TabzillaSource()

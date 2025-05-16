@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from sklearn.linear_model import LogisticRegression, Lasso
 from xgboost import XGBClassifier, XGBRegressor
@@ -93,7 +94,8 @@ class LassoSelector(Selector):
         model.fit(X=x_train, y=y_train)
 
         res = pd.DataFrame(index=x_train.columns)
-        res["value"] = model.coef_.flatten()
+        res["value"] = model.coef_.flatten() if task != "class" else (
+            np.max(model.coef_, axis=0, keepdims=False))
         return res
 
     def __select__(self, res: pd.DataFrame) -> pd.DataFrame:
