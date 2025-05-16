@@ -1,16 +1,17 @@
 from dataclasses import dataclass
-
 import numpy as np
 import pandas as pd
 from scipy.optimize import minimize
 from scipy.spatial.distance import pdist
-
 from ms.processing.preprocess import Preprocessor
 from ms.utils.typing import NDArrayFloatT
 
 
 @dataclass
 class PILOTResult:
+    """
+    Dataclass to store the results of the PILOT algorithm.
+    """
     x_bar: NDArrayFloatT
     x_hat: NDArrayFloatT
     x_0: NDArrayFloatT
@@ -27,10 +28,14 @@ class PILOTResult:
 
 
 class InstanceSpaceAnalysis:
-    def __init__(
-            self,
-            n_tries: int = 10,
-    ):
+    """
+    Implements the PILOT algorithm for instance space analysis.
+
+    Attributes:
+        n_tries (int): Number of optimization attempts to run.
+    """
+
+    def __init__(self, n_tries: int = 10):
         self.n_tries = n_tries
 
 
@@ -40,6 +45,17 @@ class InstanceSpaceAnalysis:
             metrics: pd.DataFrame,
             preprocessor: Preprocessor | None = None,
     ) -> PILOTResult:
+        """
+        Run the PILOT dimensionality reduction and performance correlation algorithm.
+
+        Args:
+            features (pd.DataFrame): Input feature set.
+            metrics (pd.DataFrame): Output performance metrics.
+            preprocessor (Preprocessor, optional): Optional preprocessing pipeline.
+
+        Returns:
+            PILOTResult: A dataclass containing all computed results.
+        """
         print("Started PILOT")
         if preprocessor is not None:
             x = preprocessor.fit_transform(features)
@@ -118,7 +134,7 @@ class InstanceSpaceAnalysis:
             x_bar: NDArrayFloatT,
             n: int,
             m: int,
-    ):
+    ) -> float:
         a = np.reshape(alpha[:2 * n], (2, n))
         b = np.reshape(alpha[2 * n:], (m, 2))
         residual = x_bar - (b @ a @ x_bar[:, :n].T).T

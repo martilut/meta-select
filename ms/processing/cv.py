@@ -5,10 +5,31 @@ from ms.utils.utils import is_classif
 
 
 def cv_decorator(func):
-    def wrapper(
-            *args,
-            **kwargs
-    ):
+    """
+    Decorator for applying cross-validation logic to a model evaluation function.
+
+    Handles:
+    - Splitting data according to provided `split` dictionary
+    - Applying column-wise feature subset if `subset` is provided
+    - Fitting and applying a `Preprocessor` if provided
+    - Optionally aggregating results across splits
+
+    Expected decorated function signature:
+    def func(x_train, y_train, x_test, y_test, inner_split=None, ...)
+
+    Args (via kwargs):
+        x (pd.DataFrame): Full feature DataFrame.
+        y (pd.DataFrame): Full target DataFrame.
+        split (dict): Dictionary containing train/test indices for each fold.
+        subset (dict): Dictionary mapping folds to feature subsets.
+        preprocessor (Preprocessor): Optional preprocessing object.
+        to_agg (bool): Whether to average results across folds (default: True).
+
+    Returns:
+        pd.DataFrame: Aggregated or per-split evaluation results.
+    """
+
+    def wrapper(*args, **kwargs):
         x: pd.DataFrame = kwargs.get("x", None)
         y: pd.DataFrame = kwargs.get("y", None)
         split: dict = kwargs.get("split", None)
@@ -17,18 +38,11 @@ def cv_decorator(func):
         to_agg: bool = kwargs.get("to_agg", True)
 
         if split is None:
+            # No CV; run once
             if x is not None and y is not None:
-                return func(
-                    x_train=x,
-                    y_train=y,
-                    *args,
-                    **kwargs
-                )
-            else:
-                return func(
-                    *args,
-                    **kwargs
-                )
+                return func(x_train=x, y_train=y, *args, **kwargs)
+            return func(*args, **kwargs)
+
         cv_res = []
         for i in split:
             x_train = x.iloc[split[i]["train"], :]

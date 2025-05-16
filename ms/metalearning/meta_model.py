@@ -1,5 +1,4 @@
 from typing import Callable, Dict
-
 import optuna
 import pandas as pd
 from sklearn.base import BaseEstimator
@@ -10,34 +9,65 @@ from ms.utils.navigation import rewrite_decorator
 
 
 class MetaModel:
+    """
+    Wrapper class for machine learning models with built-in support for
+    hyperparameter tuning using Optuna and cross-validation evaluation.
+    """
+
     def __init__(
-        self,
-        name: str,
-        display_name: str,
-        model: BaseEstimator,
-        params: dict | None = None,
-        tune: bool = False,
+            self,
+            name: str,
+            display_name: str,
+            model: BaseEstimator,
+            params: dict | None = None,
+            tune: bool = False,
     ):
+        """
+        Initialize a MetaModel instance.
+
+        Args:
+            name (str): Internal identifier for the model.
+            display_name (str): Human-readable name for display.
+            model (BaseEstimator): Scikit-learn compatible model.
+            params (dict | None): Hyperparameter search space.
+            tune (bool): Whether to tune hyperparameters.
+        """
         self.name = name
         self.display_name = display_name
         self.model = model
         self.params = params
         self.tune = tune
-        self.best_params = None  # To store best parameters after optimization
+        self.best_params = None
 
     @rewrite_decorator
     def run(
-        self,
-        x: pd.DataFrame,
-        y: pd.DataFrame,
-        split: dict,
-        opt_scoring: Callable,
-        model_scoring: Dict[str, Callable],
-        n_trials: int,
-        preprocessor: Preprocessor | None = None,
-        subset: dict | None = None,
-        **kwargs
+            self,
+            x: pd.DataFrame,
+            y: pd.DataFrame,
+            split: dict,
+            opt_scoring: str,
+            model_scoring: Dict[str, Callable],
+            n_trials: int,
+            preprocessor: Preprocessor | None = None,
+            subset: dict | None = None,
+            **kwargs
     ) -> pd.DataFrame:
+        """
+        Entry point for model training and evaluation.
+
+        Args:
+            x (pd.DataFrame): Feature data.
+            y (pd.DataFrame): Target data.
+            split (dict): Train/test split indices.
+            opt_scoring (str): Metric name for optimization.
+            model_scoring (dict): Metrics for model evaluation.
+            n_trials (int): Number of Optuna trials.
+            preprocessor (Preprocessor | None): Optional preprocessing pipeline.
+            subset (dict | None): Subset of features for each fold.
+
+        Returns:
+            pd.DataFrame: Evaluation results.
+        """
         print(f"Meta-model: {self.name}")
 
         return self.train_and_evaluate(
@@ -54,16 +84,16 @@ class MetaModel:
 
     @cv_decorator
     def train_and_evaluate(
-        self,
-        x_train: pd.DataFrame,
-        y_train: pd.DataFrame,
-        x_test: pd.DataFrame,
-        y_test: pd.DataFrame,
-        inner_split: dict,
-        opt_scoring: Callable,
-        model_scoring: Dict[str, Callable],
-        n_trials: int,
-        **kwargs
+            self,
+            x_train: pd.DataFrame,
+            y_train: pd.DataFrame,
+            x_test: pd.DataFrame,
+            y_test: pd.DataFrame,
+            inner_split: dict,
+            opt_scoring: str,
+            model_scoring: Dict[str, Callable],
+            n_trials: int,
+            **kwargs
     ) -> pd.DataFrame:
         best_params = self.optimize_hyperparameters(
             x=x_train,
@@ -72,7 +102,7 @@ class MetaModel:
             scoring=model_scoring[opt_scoring],
             n_trials=n_trials
         ) if self.tune else self.model.get_params()
-        self.best_params = best_params  # Log best parameters
+        self.best_params = best_params
         self.model.set_params(**best_params)
 
         self.model.fit(x_train.values, y_train.values.ravel())

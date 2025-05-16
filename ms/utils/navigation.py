@@ -122,11 +122,11 @@ def get_path(
 
 def rewrite_decorator(func):
     def wrapper(*args, **kwargs):
-        save_path = kwargs.get("save_path", Path())
+        save_path: Path | None = kwargs.get("save_path", None)
         to_rewrite = kwargs.get("to_rewrite", False)
         save_idx = kwargs.get("save_idx", 0)
 
-        if not to_rewrite and save_path.exists():
+        if not to_rewrite and save_path is not None and save_path.exists():
             print(f"File {save_path} already exists. Skipping...")
             return load(save_path)
         res = func(

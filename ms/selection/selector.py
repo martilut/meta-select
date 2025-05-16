@@ -2,6 +2,7 @@ from abc import ABC, abstractmethod
 import pandas as pd
 
 from ms.processing.cv import cv_decorator
+from ms.processing.preprocess import Preprocessor
 from ms.utils.utils import is_classif
 
 
@@ -110,3 +111,22 @@ class Selector(ABC):
         )
 
         return self.select(res=res, k_best=k_best)
+
+
+    def process(
+        self,
+        x: pd.DataFrame,
+        y: pd.DataFrame,
+        split: dict | None = None,
+        subset: dict | None = None,
+        preprocessor: Preprocessor | None = None,
+    ) -> pd.DataFrame:
+        res = self.compute_select(
+            x=x,
+            y=y,
+            split=split,
+            subset=subset,
+            preprocessor=preprocessor,
+            to_agg=True,
+        )
+        return x.loc[:, res.index].copy()
