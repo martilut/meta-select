@@ -1,5 +1,4 @@
 import os
-from enum import Enum
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,13 +7,8 @@ from matplotlib.patches import Patch
 from scipy.stats import mannwhitneyu
 
 from ms.config.experiment_config import ExperimentConfig
+from ms.metadataset.model_type import ModelType
 from ms.utils.navigation import pjoin
-
-
-class ModelType(Enum):
-    nn = "nn"
-    gbdt = "gbdt"
-    baseline = "baseline"
 
 
 class PlotConfig:
