@@ -1,9 +1,14 @@
 from pathlib import Path
 
 import pandas as pd
-from sklearn.metrics import (balanced_accuracy_score, f1_score, make_scorer,
-                             mean_absolute_error, r2_score,
-                             root_mean_squared_error)
+from sklearn.metrics import (
+    balanced_accuracy_score,
+    f1_score,
+    make_scorer,
+    mean_absolute_error,
+    r2_score,
+    root_mean_squared_error,
+)
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.preprocessing import PowerTransformer
@@ -18,9 +23,11 @@ from ms.selection.selectors.base import BaseSelector
 from ms.selection.selectors.causal import CFSelector, TESelector
 from ms.selection.selectors.ensemble import EnsembleSelector
 from ms.selection.selectors.model_based import LassoSelector, XGBSelector
-from ms.selection.selectors.model_free import (CorrelationSelector,
-                                               FValueSelector,
-                                               MutualInfoSelector)
+from ms.selection.selectors.model_free import (
+    CorrelationSelector,
+    FValueSelector,
+    MutualInfoSelector,
+)
 from ms.selection.selectors.model_wrapper import RFESelector
 
 

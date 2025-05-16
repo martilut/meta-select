@@ -1,8 +1,12 @@
 import pandas as pd
 from scipy.stats import pearsonr, spearmanr
-from sklearn.feature_selection import (chi2, f_classif, f_regression,
-                                       mutual_info_classif,
-                                       mutual_info_regression)
+from sklearn.feature_selection import (
+    chi2,
+    f_classif,
+    f_regression,
+    mutual_info_classif,
+    mutual_info_regression,
+)
 from statsmodels.stats.outliers_influence import variance_inflation_factor
 
 from ms.selection.selector import Selector

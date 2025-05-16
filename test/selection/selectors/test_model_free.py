@@ -1,9 +1,11 @@
 from test.selection.selectors.test_base import BaseSelectorTest
 
-from ms.selection.selectors.model_free import (CorrelationInnerSelector,
-                                               CorrelationSelector,
-                                               FValueSelector,
-                                               MutualInfoSelector)
+from ms.selection.selectors.model_free import (
+    CorrelationInnerSelector,
+    CorrelationSelector,
+    FValueSelector,
+    MutualInfoSelector,
+)
 
 
 class TestModelFree(BaseSelectorTest):

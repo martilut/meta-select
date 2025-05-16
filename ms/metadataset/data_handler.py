@@ -7,8 +7,7 @@ from ms.config.navigation_config import NavigationConfig
 from ms.metadataset.data_source import SourceBased
 from ms.metadataset.handler_info import HandlerInfo
 from ms.utils.debug import Debuggable
-from ms.utils.navigation import (get_file_name, get_path, load,
-                                 rewrite_decorator, save)
+from ms.utils.navigation import get_file_name, get_path, load, rewrite_decorator, save
 
 
 class DataHandler(SourceBased, Debuggable, ABC):
