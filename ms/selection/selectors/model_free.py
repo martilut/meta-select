@@ -182,7 +182,7 @@ class MutualInfoSelector(Selector):
 
     def __select__(self, res: pd.DataFrame) -> pd.DataFrame:
         quantile_mi = res["value"].quantile(self.quantile_value)
-        res.loc[res["value"] < quantile_mi, "value"] = None
+        res.loc[res["value"] <= quantile_mi, "value"] = None
         return res
 
 
