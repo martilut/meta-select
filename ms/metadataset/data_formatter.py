@@ -2,9 +2,9 @@ from abc import ABC
 
 import pandas as pd
 
-from ms.metadataset.handler_info import HandlerInfo
 from ms.metadataset.data_handler import FeaturesHandler, MetricsHandler
 from ms.metadataset.data_source import TabzillaSource
+from ms.metadataset.handler_info import HandlerInfo
 
 
 class DataFormatter(FeaturesHandler, MetricsHandler, ABC):
@@ -29,10 +29,10 @@ class DataFormatter(FeaturesHandler, MetricsHandler, ABC):
         return self.config.resources_path
 
     def __init__(
-            self,
-            features_folder: str = "raw",
-            metrics_folder: str | None = "raw",
-            test_mode: bool = False,
+        self,
+        features_folder: str = "raw",
+        metrics_folder: str | None = "raw",
+        test_mode: bool = False,
     ):
         super().__init__(
             features_folder=features_folder,
@@ -54,14 +54,14 @@ class TabzillaFormatter(DataFormatter):
         }
 
     def __init__(
-            self,
-            features_folder: str = "raw",
-            metrics_folder: str | None = "raw",
-            test_mode: bool = False,
-            agg_func_features: str = "median",
-            agg_func_metrics: str = "mean",
-            round_attrs: list[str] | None = None,
-            filter_families: list[str] | None = None,
+        self,
+        features_folder: str = "raw",
+        metrics_folder: str | None = "raw",
+        test_mode: bool = False,
+        agg_func_features: str = "median",
+        agg_func_metrics: str = "mean",
+        round_attrs: list[str] | None = None,
+        filter_families: list[str] | None = None,
     ):
         super().__init__(
             features_folder=features_folder,
@@ -73,13 +73,17 @@ class TabzillaFormatter(DataFormatter):
         self.round_attrs = round_attrs
         self.filter_families = filter_families
 
-    def __handle_features__(self, features_dataset: pd.DataFrame) -> tuple[pd.DataFrame, HandlerInfo]:
+    def __handle_features__(
+        self, features_dataset: pd.DataFrame
+    ) -> tuple[pd.DataFrame, HandlerInfo]:
         agg_features = self.__aggregate_features__(features_dataset=features_dataset)
         self.__round_attributes__(features_dataset=agg_features)
         self.__filter_families__(features_dataset=agg_features)
         return agg_features, HandlerInfo()
 
-    def __handle_metrics__(self, metrics_dataset: pd.DataFrame) -> tuple[pd.DataFrame, HandlerInfo]:
+    def __handle_metrics__(
+        self, metrics_dataset: pd.DataFrame
+    ) -> tuple[pd.DataFrame, HandlerInfo]:
         agg_metrics = self.__aggregate_metrics__(metrics_dataset=metrics_dataset)
         return agg_metrics, HandlerInfo()
 
@@ -106,16 +110,14 @@ class TabzillaFormatter(DataFormatter):
             col
             for col in features_dataset.columns
             if not col.startswith("f__")
-                or any(col.startswith(prefix) for prefix in prefixes)
+            or any(col.startswith(prefix) for prefix in prefixes)
         ]
         features_dataset.drop(columns=filter_cols, inplace=True)
 
     def __aggregate_metrics__(self, metrics_dataset: pd.DataFrame) -> pd.DataFrame:
         agg_metrics = metrics_dataset.loc[
             metrics_dataset["hparam_source"] == "default"
-        ].groupby(
-            ["dataset_name", "alg_name"]
-        )
+        ].groupby(["dataset_name", "alg_name"])
         if self.agg_func_metrics == "median":
             agg_metrics = agg_metrics.median(numeric_only=True)
         else:

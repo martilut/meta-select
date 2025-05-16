@@ -1,6 +1,7 @@
-from typing import List
-import pandas as pd
 from collections import Counter
+from typing import List
+
+import pandas as pd
 
 from ms.selection.selector import Selector
 

@@ -9,9 +9,11 @@ class DataSource(ABC):
     def name(self) -> str:
         pass
 
+
 @dataclass
 class TabzillaSource(DataSource):
     name: str = "tabzilla"
+
 
 class SourceBased(ABC):
     @property

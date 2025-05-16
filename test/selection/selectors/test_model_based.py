@@ -1,9 +1,9 @@
-from ms.selection.selectors.model_based import XGBSelector, LassoSelector
 from test.selection.selectors.test_base import BaseSelectorTest
+
+from ms.selection.selectors.model_based import LassoSelector, XGBSelector
 
 
 class TestXGBSelector(BaseSelectorTest):
-
     def test_process_classification(self):
         X, y = self._generate_classification_data()
         selector = XGBSelector(random_state=42, importance_threshold=0.01)
@@ -18,7 +18,6 @@ class TestXGBSelector(BaseSelectorTest):
 
 
 class TestLassoSelector(BaseSelectorTest):
-
     def test_process_classification(self):
         X, y = self._generate_classification_data()
         selector = LassoSelector(random_state=42, coef_threshold=0.01)

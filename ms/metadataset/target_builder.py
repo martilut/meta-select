@@ -4,9 +4,9 @@ import numpy as np
 import pandas as pd
 from sklearn.preprocessing import KBinsDiscretizer
 
-from ms.metadataset.handler_info import HandlerInfo
 from ms.metadataset.data_handler import MetricsHandler
 from ms.metadataset.data_source import DataSource
+from ms.metadataset.handler_info import HandlerInfo
 from ms.metadataset.model_type import ModelType
 from ms.utils.typing import NDArrayFloatT
 
@@ -33,14 +33,14 @@ class TargetBuilder(MetricsHandler, ABC):
         return "target"
 
     def __init__(
-            self,
-            md_source: DataSource,
-            features_folder: str = "filtered",
-            metrics_folder: str | None = "filtered",
-            test_mode: bool = False,
-            metric_name: str = "F1__test",
-            index_name: str = "dataset_name",
-            alg_name: str = "alg_name",
+        self,
+        md_source: DataSource,
+        features_folder: str = "filtered",
+        metrics_folder: str | None = "filtered",
+        test_mode: bool = False,
+        metric_name: str = "F1__test",
+        index_name: str = "dataset_name",
+        alg_name: str = "alg_name",
     ):
         super().__init__(
             features_folder=features_folder,
@@ -52,14 +52,11 @@ class TargetBuilder(MetricsHandler, ABC):
         self.index_name = index_name
         self.alg_name = alg_name
 
-
-    def __handle_metrics__(self, metrics_dataset: pd.DataFrame) -> tuple[pd.DataFrame, HandlerInfo]:
-        metric_results = self.__rearrange_dataset__(
-            metrics_dataset=metrics_dataset
-        )
-        target_array = self.__get_target__(
-            metrics_dataset=metric_results
-        )
+    def __handle_metrics__(
+        self, metrics_dataset: pd.DataFrame
+    ) -> tuple[pd.DataFrame, HandlerInfo]:
+        metric_results = self.__rearrange_dataset__(metrics_dataset=metrics_dataset)
+        target_array = self.__get_target__(metrics_dataset=metric_results)
         handler_info = HandlerInfo(suffix=self.__get_suffix__())
         return target_array, handler_info
 
@@ -68,7 +65,7 @@ class TargetBuilder(MetricsHandler, ABC):
             values=self.metric_name,
             index=self.index_name,
             columns=self.alg_name,
-            aggfunc='first'
+            aggfunc="first",
         )
 
     @abstractmethod
@@ -86,14 +83,14 @@ class TargetRawBuilder(TargetBuilder):
         return "raw"
 
     def __init__(
-            self,
-            md_source: DataSource,
-            features_folder: str = "filtered",
-            metrics_folder: str | None = "filtered",
-            test_mode: bool = False,
-            metric_name: str = "F1__test",
-            index_name: str = "dataset_name",
-            alg_name: str = "alg_name",
+        self,
+        md_source: DataSource,
+        features_folder: str = "filtered",
+        metrics_folder: str | None = "filtered",
+        test_mode: bool = False,
+        metric_name: str = "F1__test",
+        index_name: str = "dataset_name",
+        alg_name: str = "alg_name",
     ):
         super().__init__(
             md_source=md_source,
@@ -118,17 +115,17 @@ class TargetPerfBuilder(TargetBuilder):
         return f"perf_{self.perf_type}"
 
     def __init__(
-            self,
-            md_source: DataSource,
-            features_folder: str = "filtered",
-            metrics_folder: str | None = "filtered",
-            test_mode: bool = False,
-            metric_name: str = "F1__test",
-            index_name: str = "dataset_name",
-            alg_name: str = "alg_name",
-            perf_type: str = "abs", # or "rel"
-            n_bins: int = 2,
-            strategy: str = "quantile",
+        self,
+        md_source: DataSource,
+        features_folder: str = "filtered",
+        metrics_folder: str | None = "filtered",
+        test_mode: bool = False,
+        metric_name: str = "F1__test",
+        index_name: str = "dataset_name",
+        alg_name: str = "alg_name",
+        perf_type: str = "abs",  # or "rel"
+        n_bins: int = 2,
+        strategy: str = "quantile",
     ):
         super().__init__(
             md_source=md_source,
@@ -157,7 +154,7 @@ class TargetPerfBuilder(TargetBuilder):
         return pd.DataFrame(
             data=target_perf,
             index=metrics_dataset.index,
-            columns=metrics_dataset.columns
+            columns=metrics_dataset.columns,
         )
 
     def __get_suffix__(self) -> str:
@@ -171,7 +168,9 @@ class TargetPerfBuilder(TargetBuilder):
             strategy=self.strategy,
         )
         for i in range(nd_array.shape[1]):
-            new_array[:, i] = disc.fit_transform(nd_array[:, i].reshape(-1, 1)).flatten()
+            new_array[:, i] = disc.fit_transform(
+                nd_array[:, i].reshape(-1, 1)
+            ).flatten()
         return new_array
 
     def __get_rel_perf__(self, nd_array: NDArrayFloatT) -> NDArrayFloatT:
@@ -195,16 +194,16 @@ class TargetDiffBuilder(TargetBuilder):
         return "diff"
 
     def __init__(
-            self,
-            md_source: DataSource,
-            classes: list[str],
-            model_classes: dict[str, ModelType],
-            features_folder: str = "filtered",
-            metrics_folder: str | None = "filtered",
-            test_mode: bool = False,
-            metric_name: str = "F1__test",
-            index_name: str = "dataset_name",
-            alg_name: str = "alg_name",
+        self,
+        md_source: DataSource,
+        classes: list[str],
+        model_classes: dict[str, ModelType],
+        features_folder: str = "filtered",
+        metrics_folder: str | None = "filtered",
+        test_mode: bool = False,
+        metric_name: str = "F1__test",
+        index_name: str = "dataset_name",
+        alg_name: str = "alg_name",
     ):
         super().__init__(
             md_source=md_source,
@@ -221,7 +220,7 @@ class TargetDiffBuilder(TargetBuilder):
 
     def __get_target__(self, metrics_dataset: pd.DataFrame) -> pd.DataFrame:
         mean_vals = metrics_dataset.mean()
-        max_res = {c : ("", 0.) for c in self.classes}
+        max_res = {c: ("", 0.0) for c in self.classes}
         for i in mean_vals.index:
             if mean_vals[i] > max_res[self.model_classes[i].value][1]:
                 max_res[self.model_classes[i].value] = (i, mean_vals[i])
@@ -229,8 +228,7 @@ class TargetDiffBuilder(TargetBuilder):
 
         diff_df = pd.DataFrame(index=metrics_dataset.index)
         res = metrics_dataset[models[0]] - metrics_dataset[models[1]]
-        diff_df[f"{models[0]}__{models[1]}"] \
-            = [0 if r > 0 else 1 for r in res]
+        diff_df[f"{models[0]}__{models[1]}"] = [0 if r > 0 else 1 for r in res]
 
         self._col_name = diff_df.columns[0]
 

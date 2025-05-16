@@ -4,9 +4,9 @@ from statistics import median
 import numpy as np
 import pandas as pd
 
-from ms.metadataset.handler_info import HandlerInfo
 from ms.metadataset.data_handler import FeaturesHandler, MetricsHandler
 from ms.metadataset.data_source import TabzillaSource
+from ms.metadataset.handler_info import HandlerInfo
 from ms.utils.metadata import remove_constant_features
 
 
@@ -32,10 +32,10 @@ class DataFilter(FeaturesHandler, MetricsHandler, ABC):
         return None
 
     def __init__(
-            self,
-            features_folder: str = "formatted",
-            metrics_folder: str | None = "formatted",
-            test_mode: bool = False,
+        self,
+        features_folder: str = "formatted",
+        metrics_folder: str | None = "formatted",
+        test_mode: bool = False,
     ):
         super().__init__(
             features_folder=features_folder,
@@ -50,17 +50,17 @@ class TabzillaFilter(DataFilter):
         return TabzillaSource()
 
     def __init__(
-            self,
-            features_folder: str = "formatted",
-            metrics_folder: str | None = "formatted",
-            test_mode: bool = False,
-            nan_threshold: float = 0.5,
-            fill_func: str = "median",
-            funcs_to_exclude: list[str] | None = None,
-            keys_to_exclude: list[str] | None = None,
-            datasets_to_exclude: list[str] | None = None,
-            models_list: list[str] | None = None,
-            value_threshold: float = 10e6,
+        self,
+        features_folder: str = "formatted",
+        metrics_folder: str | None = "formatted",
+        test_mode: bool = False,
+        nan_threshold: float = 0.5,
+        fill_func: str = "median",
+        funcs_to_exclude: list[str] | None = None,
+        keys_to_exclude: list[str] | None = None,
+        datasets_to_exclude: list[str] | None = None,
+        models_list: list[str] | None = None,
+        value_threshold: float = 10e6,
     ):
         super().__init__(
             features_folder=features_folder,
@@ -75,8 +75,9 @@ class TabzillaFilter(DataFilter):
         self.models_list = models_list
         self.value_threshold = value_threshold
 
-
-    def __handle_features__(self, features_dataset: pd.DataFrame) -> tuple[pd.DataFrame, HandlerInfo]:
+    def __handle_features__(
+        self, features_dataset: pd.DataFrame
+    ) -> tuple[pd.DataFrame, HandlerInfo]:
         filtered_features = features_dataset.copy()
 
         self.__remove_features_by_func__(features_dataset=filtered_features)
@@ -85,11 +86,15 @@ class TabzillaFilter(DataFilter):
         self.__remove_unsuitable_features__(features_dataset=filtered_features)
         self.__filter_outliers__(features_dataset=filtered_features)
         remove_constant_features(features_dataset=filtered_features)
-        filtered_features = self.__remove_duplicates__(features_dataset=filtered_features)
+        filtered_features = self.__remove_duplicates__(
+            features_dataset=filtered_features
+        )
 
         return filtered_features, HandlerInfo()
 
-    def __handle_metrics__(self, metrics_dataset: pd.DataFrame) -> tuple[pd.DataFrame, HandlerInfo]:
+    def __handle_metrics__(
+        self, metrics_dataset: pd.DataFrame
+    ) -> tuple[pd.DataFrame, HandlerInfo]:
         filtered_metrics = metrics_dataset.copy()
         filtered_metrics.set_index(self.config.range_name, drop=True, inplace=True)
 
@@ -103,8 +108,9 @@ class TabzillaFilter(DataFilter):
         num_datasets = len(features_dataset.index)
         for col in features_dataset:
             x = features_dataset[col].to_numpy()
-            if (features_dataset[col].isna().sum() > num_datasets * self.nan_threshold
-                    or np.all(x == x[0])):
+            if features_dataset[
+                col
+            ].isna().sum() > num_datasets * self.nan_threshold or np.all(x == x[0]):
                 features_dataset.drop(col, axis="columns", inplace=True)
 
     def __fill_undefined_values__(self, features_dataset: pd.DataFrame) -> None:
@@ -167,8 +173,10 @@ class TabzillaFilter(DataFilter):
 
         features_to_drop = []
         for feature in features_dataset.columns:
-            if (outliers_dict.get(feature) is not None
-                    and len(outliers_dict[feature]) > median_outlier_count):
+            if (
+                outliers_dict.get(feature) is not None
+                and len(outliers_dict[feature]) > median_outlier_count
+            ):
                 outliers_dict.pop(feature)
                 features_to_drop.append(feature)
         features_dataset.drop(features_to_drop, axis="columns", inplace=True)

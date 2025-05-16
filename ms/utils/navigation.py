@@ -12,20 +12,26 @@ from matplotlib.figure import Figure
 def get_project_path() -> str:
     return str(Path(__file__).parent.parent.parent)
 
+
 def get_config_path() -> str:
     return pjoin(get_project_path(), "config")
+
 
 def get_prefix(s: str) -> str:
     return s.split("__")[0]
 
+
 def get_suffix(s: str) -> str:
     return s.split("__")[-1]
+
 
 def has_suffix(s: str) -> bool:
     return "__" in s
 
+
 def pjoin(*args) -> Path:
     return Path(join(*args))
+
 
 def get_file_name(prefix: str, suffix: str | None = None):
     if suffix is not None:
@@ -62,6 +68,7 @@ class JSONType(ResultType):
             data = json.load(f)
         return data
 
+
 class CSVType(ResultType):
     name = "csv"
 
@@ -75,6 +82,7 @@ class CSVType(ResultType):
         data = pd.read_csv(path, index_col=False)
         return data
 
+
 class PNGType(ResultType):
     name = "png"
 
@@ -84,34 +92,35 @@ class PNGType(ResultType):
     def load(self, path: Path) -> Figure:
         return Figure()
 
+
 result_types = {
     "json": JSONType(),
     "csv": CSVType(),
     "png": PNGType(),
 }
 
-def load(
-        path: Path,
-        file_type: str | None = None
-) -> Any:
+
+def load(path: Path, file_type: str | None = None) -> Any:
     if file_type is None:
         file_type = path.name.split(".")[-1]
     return result_types[file_type].load(path=path)
 
+
 def save(
-        data: Any,
-        path: Path,
-        file_type: str | None = None,
+    data: Any,
+    path: Path,
+    file_type: str | None = None,
 ) -> None:
     if file_type is None:
         file_type = path.name.split(".")[-1]
     path.parent.mkdir(exist_ok=True, parents=True)
     result_types[file_type].save(path=path, data=data)
 
+
 def get_path(
-        folders: list[str],
-        file_name: str,
-        file_type: str,
+    folders: list[str],
+    file_name: str,
+    file_type: str,
 ) -> Path:
     path = pjoin(
         get_project_path(),
@@ -119,6 +128,7 @@ def get_path(
         f"{file_name}.{file_type}",
     )
     return Path(path)
+
 
 def rewrite_decorator(func):
     def wrapper(*args, **kwargs):
@@ -129,10 +139,7 @@ def rewrite_decorator(func):
         if not to_rewrite and save_path is not None and save_path.exists():
             print(f"File {save_path} already exists. Skipping...")
             return load(save_path)
-        res = func(
-            *args,
-            **kwargs
-        )
+        res = func(*args, **kwargs)
         if save_path is not None:
             os.makedirs(os.path.dirname(save_path), exist_ok=True)
             if isinstance(res, (pd.DataFrame, dict)):
@@ -140,4 +147,5 @@ def rewrite_decorator(func):
             else:
                 save(data=res[save_idx], path=save_path)
         return res
+
     return wrapper

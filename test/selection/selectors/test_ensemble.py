@@ -1,8 +1,9 @@
-from ms.selection.selectors.ensemble import EnsembleSelector
-from ms.selection.selector import Selector
+from test.selection.selectors.test_base import BaseSelectorTest
+
 import pandas as pd
 
-from test.selection.selectors.test_base import BaseSelectorTest
+from ms.selection.selector import Selector
+from ms.selection.selectors.ensemble import EnsembleSelector
 
 
 class DummySelector(Selector):

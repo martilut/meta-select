@@ -1,4 +1,5 @@
 from random import sample
+
 import pandas as pd
 from sklearn.model_selection import KFold, StratifiedKFold
 
@@ -54,7 +55,9 @@ def split_k_fold(
             y_train = y_df.iloc[outer_train]
             splits_dict[i]["inner_split"] = {}
 
-            for j, (inner_train, inner_val) in enumerate(inner_split.split(x_train, y_train)):
+            for j, (inner_train, inner_val) in enumerate(
+                inner_split.split(x_train, y_train)
+            ):
                 splits_dict[i]["inner_split"][j] = {
                     "train": list(map(int, inner_train)),
                     "test": list(map(int, inner_val)),
@@ -117,8 +120,12 @@ def sample_features(
         percents = [0.1, 0.5, 1.0]
 
     samples_dict = {}
-    additional_indices = [i for i, f in enumerate(x_df.columns) if f.split("___")[0] == suffix]
-    original_indices = [i for i, f in enumerate(x_df.columns) if f.split("___")[0] != suffix]
+    additional_indices = [
+        i for i, f in enumerate(x_df.columns) if f.split("___")[0] == suffix
+    ]
+    original_indices = [
+        i for i, f in enumerate(x_df.columns) if f.split("___")[0] != suffix
+    ]
 
     for i, percent in enumerate(percents):
         sample_size = int(len(additional_indices) * percent)

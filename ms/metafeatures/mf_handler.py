@@ -8,16 +8,16 @@ from pymfe.mfe import MFE
 
 class MfHandler:
     def __init__(
-            self,
-            groups: list[str] | None = None,
-            summary_functions: list[str] | None = None,
-            score: str | None = None,
-            random_state: int | None = None,
-            transform_num: bool = False,
-            transform_cat: str | None = None,
-            rescale: str | None = None,
-            cat_cols: list[str] | str = "auto",
-            suppress_warnings: bool = False,
+        self,
+        groups: list[str] | None = None,
+        summary_functions: list[str] | None = None,
+        score: str | None = None,
+        random_state: int | None = None,
+        transform_num: bool = False,
+        transform_cat: str | None = None,
+        rescale: str | None = None,
+        cat_cols: list[str] | str = "auto",
+        suppress_warnings: bool = False,
     ):
         self.groups = groups
         self.summary_functions = summary_functions

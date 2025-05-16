@@ -1,7 +1,9 @@
 from pathlib import Path
+
 import pandas as pd
-from sklearn.metrics import make_scorer, balanced_accuracy_score, f1_score, mean_absolute_error, \
-    root_mean_squared_error, r2_score
+from sklearn.metrics import (balanced_accuracy_score, f1_score, make_scorer,
+                             mean_absolute_error, r2_score,
+                             root_mean_squared_error)
 from sklearn.neighbors import KNeighborsClassifier, KNeighborsRegressor
 from sklearn.neural_network import MLPClassifier, MLPRegressor
 from sklearn.preprocessing import PowerTransformer
@@ -13,10 +15,12 @@ from ms.metalearning.meta_model import MetaModel
 from ms.processing.preprocess import Preprocessor
 from ms.selection.mlp_wrapper import MLPWithCoef
 from ms.selection.selectors.base import BaseSelector
-from ms.selection.selectors.causal import TESelector, CFSelector
+from ms.selection.selectors.causal import CFSelector, TESelector
 from ms.selection.selectors.ensemble import EnsembleSelector
-from ms.selection.selectors.model_based import XGBSelector, LassoSelector
-from ms.selection.selectors.model_free import CorrelationSelector, MutualInfoSelector, FValueSelector
+from ms.selection.selectors.model_based import LassoSelector, XGBSelector
+from ms.selection.selectors.model_free import (CorrelationSelector,
+                                               FValueSelector,
+                                               MutualInfoSelector)
 from ms.selection.selectors.model_wrapper import RFESelector
 
 
@@ -33,7 +37,9 @@ class ExperimentConfig:
     CONF = NavigationConfig()
 
     @staticmethod
-    def get_data(features_path: Path, metrics_path: Path) -> tuple[pd.DataFrame, pd.DataFrame]:
+    def get_data(
+        features_path: Path, metrics_path: Path
+    ) -> tuple[pd.DataFrame, pd.DataFrame]:
         features = pd.read_csv(features_path, index_col=0)
         features = features.loc[:, to_loc]
         metrics = pd.read_csv(metrics_path, index_col=0)
@@ -51,7 +57,7 @@ class ExperimentConfig:
             "leaf_size": (5, 20),
             "algorithm": ["auto", "ball_tree", "kd_tree", "brute"],
             "p": [1],
-            "metric": ["minkowski", "euclidean", "manhattan", "chebyshev"]
+            "metric": ["minkowski", "euclidean", "manhattan", "chebyshev"],
         },
         tune=True,
     )
@@ -66,7 +72,7 @@ class ExperimentConfig:
             "leaf_size": (5, 20),
             "algorithm": ["auto", "ball_tree", "kd_tree", "brute"],
             "p": [1, 2],
-            "metric": ["minkowski", "euclidean", "manhattan", "chebyshev"]
+            "metric": ["minkowski", "euclidean", "manhattan", "chebyshev"],
         },
         tune=True,
     )
@@ -74,7 +80,12 @@ class ExperimentConfig:
     XGB_CLASS = MetaModel(
         name="xgb",
         display_name="XGBoost",
-        model=XGBClassifier(objective='multi:softmax', num_class=3, eval_metric='mlogloss', use_label_encoder=False),
+        model=XGBClassifier(
+            objective="multi:softmax",
+            num_class=3,
+            eval_metric="mlogloss",
+            use_label_encoder=False,
+        ),
         params={
             "n_estimators": [20, 50, 100, 200],
             "learning_rate": (0.01, 0.3),
@@ -102,7 +113,14 @@ class ExperimentConfig:
         display_name="MLP",
         model=MLPClassifier(),
         params={
-            "hidden_layer_sizes": [(10, 10), (20, 20), (50, 50), (5, 5, 5), (10, 10, 10), (20, 20, 20)],
+            "hidden_layer_sizes": [
+                (10, 10),
+                (20, 20),
+                (50, 50),
+                (5, 5, 5),
+                (10, 10, 10),
+                (20, 20, 20),
+            ],
             "activation": ["relu", "tanh", "logistic"],
             "solver": ["adam", "lbfgs", "sgd"],
             "alpha": (0.0001, 0.001, 0.01, 0.05, 0.1, 0.5),
@@ -162,8 +180,12 @@ class ExperimentConfig:
 
     CF = CFSelector(cf_steps=100, train_epochs=100, dc=0.2, device="cpu", cv=False)
 
-    RFE_CLASS_XGB = RFESelector(model=XGB_CLASS.model, rank_threshold=1.0, name="rfe_xgb", cv=False)
-    RFE_REG_XGB = RFESelector(model=XGB_REG.model, rank_threshold=1.0, name="rfe_xgb", cv=False)
+    RFE_CLASS_XGB = RFESelector(
+        model=XGB_CLASS.model, rank_threshold=1.0, name="rfe_xgb", cv=False
+    )
+    RFE_REG_XGB = RFESelector(
+        model=XGB_REG.model, rank_threshold=1.0, name="rfe_xgb", cv=False
+    )
 
     RFE_CLASS_MLP = RFESelector(
         model=MLPWithCoef(model=MLP_CLASS.model),
@@ -179,18 +201,20 @@ class ExperimentConfig:
         cv=False,
     )
 
-    ENSEMBLE = EnsembleSelector(selectors=[CORR, MI, F_VALUE, XGB_SELECTOR, LASSO_SELECTOR])
+    ENSEMBLE = EnsembleSelector(
+        selectors=[CORR, MI, F_VALUE, XGB_SELECTOR, LASSO_SELECTOR]
+    )
 
     # Scoring
     OPT_SCORING_CLASS = "b_acc"
     MODEL_SCORING_CLASS = {
-        'b_acc': make_scorer(balanced_accuracy_score),
-        'f1': make_scorer(f1_score, average='weighted'),
+        "b_acc": make_scorer(balanced_accuracy_score),
+        "f1": make_scorer(f1_score, average="weighted"),
     }
 
     OPT_SCORING_REG = "rmse"
     MODEL_SCORING_REG = {
-        'mae': make_scorer(mean_absolute_error),
-        'rmse': make_scorer(root_mean_squared_error),
-        'r2': make_scorer(r2_score),
+        "mae": make_scorer(mean_absolute_error),
+        "rmse": make_scorer(root_mean_squared_error),
+        "r2": make_scorer(r2_score),
     }

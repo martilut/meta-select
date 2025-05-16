@@ -6,23 +6,23 @@ import pandas as pd
 from ms.config.experiment_config import ExperimentConfig
 from ms.metalearning.isa import InstanceSpaceAnalysis
 from ms.metalearning.meta_model import MetaModel
-from ms.pipeline.runner import run_selector, aggregate_selector_folds
+from ms.pipeline.runner import aggregate_selector_folds, run_selector
 from ms.plot.plotting import save_isa_data
 from ms.processing.split import split_k_fold
 from ms.selection.selector import Selector
-from ms.utils.navigation import pjoin, get_file_name, load
-from ms.utils.utils import measure_runtime, save_runtime, is_classif
+from ms.utils.navigation import get_file_name, load, pjoin
+from ms.utils.utils import is_classif, measure_runtime, save_runtime
 
 np.random.seed(ExperimentConfig.SEED)
 random.seed(ExperimentConfig.SEED)
 
 
 def run_selectors(
-        features: pd.DataFrame,
-        metrics: pd.DataFrame,
-        source: str,
-        metrics_suffix: str,
-        selectors: list[Selector],
+    features: pd.DataFrame,
+    metrics: pd.DataFrame,
+    source: str,
+    metrics_suffix: str,
+    selectors: list[Selector],
 ) -> None:
     for target_name in metrics.columns:
         print(f"Running selectors for {target_name}")
@@ -38,7 +38,7 @@ def run_selectors(
                 ExperimentConfig.CONF.results_path,
                 source,
                 metrics_suffix,
-                f"{target_name}.json"
+                f"{target_name}.json",
             ),
         )
         for selector in selectors:
@@ -57,7 +57,7 @@ def run_selectors(
                     metrics_suffix,
                     target_name,
                     selector.name,
-                    "res.json"
+                    "res.json",
                 ),
             )
             save_runtime(
@@ -70,18 +70,18 @@ def run_selectors(
                     metrics_suffix,
                     target_name,
                     selector.name,
-                    "time.csv"
+                    "time.csv",
                 ),
             )
 
 
 def run_models(
-        features: pd.DataFrame,
-        metrics: pd.DataFrame,
-        source: str,
-        metrics_suffix: str,
-        selectors: list[Selector],
-        models: dict[MetaModel, list[str]],
+    features: pd.DataFrame,
+    metrics: pd.DataFrame,
+    source: str,
+    metrics_suffix: str,
+    selectors: list[Selector],
+    models: dict[MetaModel, list[str]],
 ) -> None:
     for target_name in metrics.columns:
         print(f"Running models for {target_name}")
@@ -93,7 +93,7 @@ def run_models(
                     ExperimentConfig.CONF.results_path,
                     source,
                     metrics_suffix,
-                    f"{target_name}.json"
+                    f"{target_name}.json",
                 ),
             )
             selector_data = run_selector(
@@ -103,7 +103,7 @@ def run_models(
                     metrics_suffix,
                     target_name,
                     selector.name,
-                    "res.json"
+                    "res.json",
                 ),
             )
             for model in models:
@@ -114,8 +114,12 @@ def run_models(
                     x=features,
                     y=target,
                     split=target_split,
-                    opt_scoring=ExperimentConfig.OPT_SCORING_CLASS if is_classif(target) else ExperimentConfig.OPT_SCORING_REG,
-                    model_scoring=ExperimentConfig.MODEL_SCORING_CLASS if is_classif(target) else ExperimentConfig.MODEL_SCORING_REG,
+                    opt_scoring=ExperimentConfig.OPT_SCORING_CLASS
+                    if is_classif(target)
+                    else ExperimentConfig.OPT_SCORING_REG,
+                    model_scoring=ExperimentConfig.MODEL_SCORING_CLASS
+                    if is_classif(target)
+                    else ExperimentConfig.MODEL_SCORING_REG,
                     n_trials=10,
                     preprocessor=ExperimentConfig.PREPROCESSOR,
                     subset=selector_data,
@@ -126,7 +130,7 @@ def run_models(
                         target_name,
                         selector.name,
                         "pred",
-                        f"{model.name}.csv"
+                        f"{model.name}.csv",
                     ),
                     to_rewrite=True,
                 )
@@ -138,20 +142,20 @@ def run_models(
                         target_name,
                         selector.name,
                         "pred",
-                        f"{model.name}_params.json"
+                        f"{model.name}_params.json",
                     ),
                     to_rewrite=True,
                 )
 
 
 def run_isa(
-        features: pd.DataFrame,
-        metrics: pd.DataFrame,
-        source: str,
-        metrics_suffix: str,
-        selectors: list[Selector],
-        models: dict[MetaModel, list[str]],
-        isa: InstanceSpaceAnalysis,
+    features: pd.DataFrame,
+    metrics: pd.DataFrame,
+    source: str,
+    metrics_suffix: str,
+    selectors: list[Selector],
+    models: dict[MetaModel, list[str]],
+    isa: InstanceSpaceAnalysis,
 ) -> None:
     for target_name in metrics.columns:
         print(f"Running models for {target_name}")
@@ -163,7 +167,7 @@ def run_isa(
                     ExperimentConfig.CONF.results_path,
                     source,
                     metrics_suffix,
-                    f"{target_name}.json"
+                    f"{target_name}.json",
                 ),
             )
             csv_data = load(
@@ -173,7 +177,7 @@ def run_isa(
                     metrics_suffix,
                     target_name,
                     selector.name,
-                    "data.csv"
+                    "data.csv",
                 ),
             )
             selector_data = aggregate_selector_folds(csv_data)
@@ -185,7 +189,9 @@ def run_isa(
                 preprocessor=ExperimentConfig.PREPROCESSOR,
             )
             # summary = pilot_res.summary
-            isa_features = pd.DataFrame(pilot_res.z, index=features.index, columns=["z1", "z2"])
+            isa_features = pd.DataFrame(
+                pilot_res.z, index=features.index, columns=["z1", "z2"]
+            )
             save_isa_data(
                 selected_names=selector_data,
                 features=isa_features,
@@ -200,7 +206,7 @@ def run_isa(
                     selector.name,
                     "isa_data",
                     target_name,
-                    "plot.png"
+                    "plot.png",
                 ),
                 save_path=pjoin(
                     ExperimentConfig.CONF.results_path,
@@ -210,7 +216,7 @@ def run_isa(
                     selector.name,
                     "isa_data",
                     target_name,
-                    "data.json"
+                    "data.json",
                 ),
                 to_rewrite=False,
             )
@@ -222,8 +228,12 @@ def run_isa(
                     x=isa_features,
                     y=target,
                     split=target_split,
-                    opt_scoring=ExperimentConfig.OPT_SCORING_CLASS if is_classif(target) else ExperimentConfig.OPT_SCORING_REG,
-                    model_scoring=ExperimentConfig.MODEL_SCORING_CLASS if is_classif(target) else ExperimentConfig.MODEL_SCORING_REG,
+                    opt_scoring=ExperimentConfig.OPT_SCORING_CLASS
+                    if is_classif(target)
+                    else ExperimentConfig.OPT_SCORING_REG,
+                    model_scoring=ExperimentConfig.MODEL_SCORING_CLASS
+                    if is_classif(target)
+                    else ExperimentConfig.MODEL_SCORING_REG,
                     n_trials=10,
                     preprocessor=ExperimentConfig.PREPROCESSOR,
                     subset=selector_data,
@@ -234,7 +244,7 @@ def run_isa(
                         target_name,
                         selector.name,
                         "isa_pred",
-                        f"{model.name}.csv"
+                        f"{model.name}.csv",
                     ),
                     to_rewrite=False,
                 )
@@ -246,7 +256,7 @@ def run_isa(
                         target_name,
                         selector.name,
                         "isa_pred",
-                        f"{model.name}_params.json"
+                        f"{model.name}_params.json",
                     ),
                     to_rewrite=False,
                 )
@@ -292,14 +302,14 @@ if __name__ == "__main__":
             ExperimentConfig.CONF.resources_path,
             source,
             "filtered",
-            f"{get_file_name(prefix='features', suffix=feature_suffix)}.csv"
+            f"{get_file_name(prefix='features', suffix=feature_suffix)}.csv",
         ),
         metrics_path=pjoin(
             ExperimentConfig.CONF.resources_path,
             source,
             "target",
-            f"{get_file_name(prefix='metrics', suffix=metrics_suffix)}.csv"
-        )
+            f"{get_file_name(prefix='metrics', suffix=metrics_suffix)}.csv",
+        ),
     )
     run_selectors(
         features=features,
@@ -323,5 +333,5 @@ if __name__ == "__main__":
         metrics_suffix=metrics_suffix,
         selectors=selectors,
         models=models,
-        isa=InstanceSpaceAnalysis()
+        isa=InstanceSpaceAnalysis(),
     )

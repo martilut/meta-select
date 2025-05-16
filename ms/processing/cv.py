@@ -66,13 +66,15 @@ def cv_decorator(func):
                 #     y_test = y_fitted.transform(y_test)
 
             y_type = "class" if is_classif(y_train) else "reg"
-            print(f"Split {i}, "
-                  f"x_train: {x_train.shape}, "
-                  f"x_test: {x_test.shape}, "
-                  f"y_train: {y_train.shape}, "
-                  f"y_test: {y_test.shape}, "
-                  f"y type: {y_type}, "
-                  f"has inner_split: {inner_split is not None}")
+            print(
+                f"Split {i}, "
+                f"x_train: {x_train.shape}, "
+                f"x_test: {x_test.shape}, "
+                f"y_train: {y_train.shape}, "
+                f"y_test: {y_test.shape}, "
+                f"y type: {y_type}, "
+                f"has inner_split: {inner_split is not None}"
+            )
 
             res = func(
                 x_train=x_train,
@@ -81,13 +83,15 @@ def cv_decorator(func):
                 y_test=y_test,
                 inner_split=inner_split,
                 *args,
-                **kwargs
+                **kwargs,
             )
             res.columns = [f"{col}_{i}" for col in res.columns]
             cv_res.append(res)
         cv_res = pd.concat(cv_res, axis=1)
-        return cv_res.mean(
-            axis=1,
-            skipna=False
-        ).to_frame(name="value") if to_agg else cv_res
+        return (
+            cv_res.mean(axis=1, skipna=False).to_frame(name="value")
+            if to_agg
+            else cv_res
+        )
+
     return wrapper

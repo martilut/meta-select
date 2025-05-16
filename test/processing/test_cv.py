@@ -7,11 +7,11 @@ from ms.processing.cv import cv_decorator
 
 @pytest.fixture
 def dummy_data():
-    x = pd.DataFrame(np.random.rand(10, 3), columns=['a', 'b', 'c'])
-    y = pd.DataFrame(np.random.randint(0, 2, size=(10, 1)), columns=['target'])
+    x = pd.DataFrame(np.random.rand(10, 3), columns=["a", "b", "c"])
+    y = pd.DataFrame(np.random.randint(0, 2, size=(10, 1)), columns=["target"])
     split = {
         0: {"train": list(range(0, 6)), "test": list(range(6, 10))},
-        1: {"train": list(range(4, 10)), "test": list(range(0, 4))}
+        1: {"train": list(range(4, 10)), "test": list(range(0, 4))},
     }
     return x, y, split
 
@@ -25,9 +25,9 @@ def dummy_eval(x_train, y_train, x_test=None, y_test=None, **kwargs):
         x_test = x_train
     if y_test is None:
         y_test = y_train
-    result = pd.DataFrame([{
-        "score": (y_test.values.ravel() == y_test.values.ravel()).mean()
-    }])
+    result = pd.DataFrame(
+        [{"score": (y_test.values.ravel() == y_test.values.ravel()).mean()}]
+    )
     return result
 
 

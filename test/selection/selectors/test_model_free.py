@@ -1,14 +1,12 @@
-from ms.selection.selectors.model_free import (
-    CorrelationSelector,
-    CorrelationInnerSelector,
-    MutualInfoSelector,
-    FValueSelector,
-)
 from test.selection.selectors.test_base import BaseSelectorTest
+
+from ms.selection.selectors.model_free import (CorrelationInnerSelector,
+                                               CorrelationSelector,
+                                               FValueSelector,
+                                               MutualInfoSelector)
 
 
 class TestModelFree(BaseSelectorTest):
-
     def test_process_correlation_selector(self):
         X, y = self._generate_classification_data()
         selector = CorrelationSelector()

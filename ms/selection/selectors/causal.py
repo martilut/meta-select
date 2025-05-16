@@ -9,7 +9,7 @@ from econml.dml import CausalForestDML
 from econml.orf import DROrthoForest
 from sklearn.ensemble import RandomForestRegressor
 from torch import nn, optim
-from torch.utils.data import TensorDataset, DataLoader
+from torch.utils.data import DataLoader, TensorDataset
 
 from ms.selection.selector import Selector
 
@@ -20,21 +20,21 @@ class TESelector(Selector):
         return "te"
 
     def __init__(
-            self,
-            model_y: Any = None,
-            model_t: Any = None,
-            to_tune: bool = True,
-            quantile_value: float = 0.8,
-            max_depth: int = 50,
-            min_leaf: int = 5,
-            n_splits: int = 2,
-            n_estimators: int = 100,
-            n_trees: int = 500,
-            n_jobs: int = -1,
-            mode: str = "individual",
-            model_type: str = "cf", # or "drof"
-            random_state: int | None = None,
-            cv: bool = True,
+        self,
+        model_y: Any = None,
+        model_t: Any = None,
+        to_tune: bool = True,
+        quantile_value: float = 0.8,
+        max_depth: int = 50,
+        min_leaf: int = 5,
+        n_splits: int = 2,
+        n_estimators: int = 100,
+        n_trees: int = 500,
+        n_jobs: int = -1,
+        mode: str = "individual",
+        model_type: str = "cf",  # or "drof"
+        random_state: int | None = None,
+        cv: bool = True,
     ):
         super().__init__(cv=cv)
         default_model = RandomForestRegressor(
@@ -69,25 +69,25 @@ class TESelector(Selector):
                 max_depth=self.max_depth,
                 fit_intercept=True,
                 n_jobs=self.n_jobs,
-                random_state=self.random_state
+                random_state=self.random_state,
             )
         elif self.model_type == "drof":
             return DROrthoForest(
                 n_trees=self.n_trees,
                 min_leaf_size=self.min_leaf,
                 max_depth=self.max_depth,
-                random_state=self.random_state
+                random_state=self.random_state,
             )
         else:
             raise ValueError("Invalid model_type. Choose 'cf' or 'drof'")
 
     def _compute_effect_individual(
-            self,
-            x_train: pd.DataFrame,
-            y_train: pd.DataFrame,
-            x_test: pd.DataFrame,
-            i: int,
-            f_name: str,
+        self,
+        x_train: pd.DataFrame,
+        y_train: pd.DataFrame,
+        x_test: pd.DataFrame,
+        i: int,
+        f_name: str,
     ):
         print(f"Processing feature {f_name}..., {i}/{x_train.shape[1]}")
         t_train, t_test = x_train.iloc[:, i].to_numpy(), x_test.iloc[:, i].to_numpy()
@@ -104,10 +104,10 @@ class TESelector(Selector):
         return f_name, treatment_effects
 
     def _compute_effect_joint(
-            self,
-            x_train: pd.DataFrame,
-            y_train: pd.DataFrame,
-            x_test: pd.DataFrame,
+        self,
+        x_train: pd.DataFrame,
+        y_train: pd.DataFrame,
+        x_test: pd.DataFrame,
     ):
         dml = self._get_model()
 
@@ -119,19 +119,16 @@ class TESelector(Selector):
         return treatment_effects
 
     def compute_generic(
-            self,
-            x_train: pd.DataFrame,
-            y_train: pd.Series,
-            x_test: pd.DataFrame | None = None,
-            y_test: pd.Series | None = None,
-            task: str = "class",
+        self,
+        x_train: pd.DataFrame,
+        y_train: pd.Series,
+        x_test: pd.DataFrame | None = None,
+        y_test: pd.Series | None = None,
+        task: str = "class",
     ) -> pd.DataFrame:
         x_test = x_train if x_test is None else x_test
 
-        res = pd.DataFrame(
-            index=x_train.columns,
-            columns=["value"]
-        )
+        res = pd.DataFrame(index=x_train.columns, columns=["value"])
 
         effect_results = {f_name: [] for f_name in x_train.columns}
 
@@ -145,8 +142,7 @@ class TESelector(Selector):
                     i=i,
                     f_name=f_name,
                 )
-                for i, f_name
-                in enumerate(x_train.columns)
+                for i, f_name in enumerate(x_train.columns)
             ]
             for f_name, treatment_effects in results:
                 effect_results[f_name].extend(treatment_effects)
@@ -179,25 +175,24 @@ class TEDAGSelector(Selector):
         return "te_dag"
 
     def __init__(
-            self,
-            cv: bool = True,
-            reg_method: str = "backdoor.linear_regression",
-            class_method: str = "backdoor.propensity_score_matching",
-            method_params: dict | None = None,
+        self,
+        cv: bool = True,
+        reg_method: str = "backdoor.linear_regression",
+        class_method: str = "backdoor.propensity_score_matching",
+        method_params: dict | None = None,
     ) -> None:
         super().__init__(cv=cv)
         self.reg_method = reg_method
         self.class_method = class_method
         self.method_params = method_params
 
-
     def compute_generic(
-            self,
-            x_train: pd.DataFrame,
-            y_train: pd.DataFrame,
-            x_test: pd.DataFrame | None = None,
-            y_test: pd.DataFrame | None = None,
-            task: str = "class",
+        self,
+        x_train: pd.DataFrame,
+        y_train: pd.DataFrame,
+        x_test: pd.DataFrame | None = None,
+        y_test: pd.DataFrame | None = None,
+        task: str = "class",
     ) -> pd.DataFrame:
         train = x_train.copy()
         train["y"] = y_train.copy()
@@ -209,15 +204,10 @@ class TEDAGSelector(Selector):
                 data=train,
                 treatment=feature,
                 outcome="y",
-                common_causes=[
-                    i for i in train.columns if i not in [
-                        "y", feature
-                    ]
-                ]
+                common_causes=[i for i in train.columns if i not in ["y", feature]],
             )
             identified_estimand = model.identify_effect(
-                proceed_when_unidentifiable=True,
-                method_name="maximal-adjustment"
+                proceed_when_unidentifiable=True, method_name="maximal-adjustment"
             )
             causal_estimate = model.estimate_effect(
                 identified_estimand,
@@ -228,7 +218,6 @@ class TEDAGSelector(Selector):
         res = pd.DataFrame.from_dict(res, orient="index", columns=["value"])
         res.index = x_train.columns
         return res
-
 
     def __select__(self, res: pd.DataFrame) -> pd.DataFrame:
         res.loc[res["value"].abs() == 0.0, "value"] = None
@@ -250,12 +239,12 @@ class CFSelector(Selector):
         return "cf"
 
     def __init__(
-            self,
-            cf_steps: int = 500,
-            train_epochs: int = 300,
-            dc: float = 0.2,
-            device: str = "cuda" if torch.cuda.is_available() else "cpu",
-            cv: bool = False,
+        self,
+        cf_steps: int = 500,
+        train_epochs: int = 300,
+        dc: float = 0.2,
+        device: str = "cuda" if torch.cuda.is_available() else "cpu",
+        cv: bool = False,
     ) -> None:
         super().__init__(cv=cv)
         self.cf_steps = cf_steps
@@ -264,12 +253,12 @@ class CFSelector(Selector):
         self.device = device
 
     def compute_generic(
-            self,
-            x_train: pd.DataFrame,
-            y_train: pd.DataFrame,
-            x_test: pd.DataFrame | None = None,
-            y_test: pd.DataFrame | None = None,
-            task: str = "class",
+        self,
+        x_train: pd.DataFrame,
+        y_train: pd.DataFrame,
+        x_test: pd.DataFrame | None = None,
+        y_test: pd.DataFrame | None = None,
+        task: str = "class",
     ) -> pd.DataFrame:
         X = np.array(x_train)
         y = np.array(y_train).flatten()
@@ -281,9 +270,7 @@ class CFSelector(Selector):
             for feat_idx in range(num_features):
                 mask = np.zeros(num_features, dtype=bool)
                 mask[feat_idx] = True
-                future = executor.submit(
-                    self._evaluate_feature_subset, X, y, mask
-                )
+                future = executor.submit(self._evaluate_feature_subset, X, y, mask)
                 futures[future] = feat_idx
 
             for future in as_completed(futures):

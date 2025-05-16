@@ -1,6 +1,8 @@
-import pandas as pd
 import numpy as np
-from ms.processing.split import split_k_fold, slice_features, sample_features
+import pandas as pd
+
+from ms.processing.split import sample_features, slice_features, split_k_fold
+
 
 def test_split_k_fold_classification():
     x = pd.DataFrame(np.random.rand(100, 10))
@@ -12,12 +14,14 @@ def test_split_k_fold_classification():
     assert len(splits) == 5
     assert len(splits[0]["inner_split"]) == 2
 
+
 def test_split_k_fold_regression():
     x = pd.DataFrame(np.random.rand(100, 5))
     y = pd.DataFrame(np.random.rand(100, 1))
     splits = split_k_fold(x, y, outer_k=3, inner_k=2)
     assert isinstance(splits, dict)
     assert len(splits) == 3
+
 
 def test_slice_features():
     x = pd.DataFrame(np.random.rand(50, 10))
@@ -27,6 +31,7 @@ def test_slice_features():
     for k, v in slices.items():
         for lst in v.values():
             assert len(lst) == k
+
 
 def test_sample_features():
     cols = ["A", "B", "C___1", "C___2", "C___3"]

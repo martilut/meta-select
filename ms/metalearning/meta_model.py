@@ -1,4 +1,5 @@
 from typing import Callable, Dict
+
 import optuna
 import pandas as pd
 from sklearn.base import BaseEstimator
@@ -15,12 +16,12 @@ class MetaModel:
     """
 
     def __init__(
-            self,
-            name: str,
-            display_name: str,
-            model: BaseEstimator,
-            params: dict | None = None,
-            tune: bool = False,
+        self,
+        name: str,
+        display_name: str,
+        model: BaseEstimator,
+        params: dict | None = None,
+        tune: bool = False,
     ):
         """
         Initialize a MetaModel instance.
@@ -41,16 +42,16 @@ class MetaModel:
 
     @rewrite_decorator
     def run(
-            self,
-            x: pd.DataFrame,
-            y: pd.DataFrame,
-            split: dict,
-            opt_scoring: str,
-            model_scoring: Dict[str, Callable],
-            n_trials: int,
-            preprocessor: Preprocessor | None = None,
-            subset: dict | None = None,
-            **kwargs
+        self,
+        x: pd.DataFrame,
+        y: pd.DataFrame,
+        split: dict,
+        opt_scoring: str,
+        model_scoring: Dict[str, Callable],
+        n_trials: int,
+        preprocessor: Preprocessor | None = None,
+        subset: dict | None = None,
+        **kwargs,
     ) -> pd.DataFrame:
         """
         Entry point for model training and evaluation.
@@ -84,31 +85,34 @@ class MetaModel:
 
     @cv_decorator
     def train_and_evaluate(
-            self,
-            x_train: pd.DataFrame,
-            y_train: pd.DataFrame,
-            x_test: pd.DataFrame,
-            y_test: pd.DataFrame,
-            inner_split: dict,
-            opt_scoring: str,
-            model_scoring: Dict[str, Callable],
-            n_trials: int,
-            **kwargs
+        self,
+        x_train: pd.DataFrame,
+        y_train: pd.DataFrame,
+        x_test: pd.DataFrame,
+        y_test: pd.DataFrame,
+        inner_split: dict,
+        opt_scoring: str,
+        model_scoring: Dict[str, Callable],
+        n_trials: int,
+        **kwargs,
     ) -> pd.DataFrame:
-        best_params = self.optimize_hyperparameters(
-            x=x_train,
-            y=y_train,
-            split=inner_split,
-            scoring=model_scoring[opt_scoring],
-            n_trials=n_trials
-        ) if self.tune else self.model.get_params()
+        best_params = (
+            self.optimize_hyperparameters(
+                x=x_train,
+                y=y_train,
+                split=inner_split,
+                scoring=model_scoring[opt_scoring],
+                n_trials=n_trials,
+            )
+            if self.tune
+            else self.model.get_params()
+        )
         self.best_params = best_params
         self.model.set_params(**best_params)
 
         self.model.fit(x_train.values, y_train.values.ravel())
         result = pd.DataFrame(
-            index=[name for name in model_scoring.keys()],
-            columns=["train", "test"]
+            index=[name for name in model_scoring.keys()], columns=["train", "test"]
         )
         for name, func in model_scoring.items():
             train_score = func(self.model, x_train.values, y_train.values.ravel())
@@ -131,11 +135,7 @@ class MetaModel:
         study = optuna.create_study(direction="maximize")
         study.optimize(
             lambda trial: self.objective(
-                trial=trial,
-                x=x,
-                y=y,
-                split=split,
-                scoring=scoring
+                trial=trial, x=x, y=y, split=split, scoring=scoring
             ),
             n_trials=n_trials,
         )
@@ -164,11 +164,11 @@ class MetaModel:
 
         @cv_decorator
         def optuna_score(
-                x_train: pd.DataFrame,
-                y_train: pd.DataFrame,
-                x_test: pd.DataFrame,
-                y_test: pd.DataFrame,
-                **kwargs
+            x_train: pd.DataFrame,
+            y_train: pd.DataFrame,
+            x_test: pd.DataFrame,
+            y_test: pd.DataFrame,
+            **kwargs,
         ):
             self.model.fit(x_train.values, y_train.values.ravel())
             score = scoring(self.model, x_test.values, y_test.values.ravel())
